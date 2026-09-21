@@ -1,8 +1,12 @@
 # SyncView
 
+**한국어** | [English](README.en.md)
+
 <img src="src/videos_multi_view/assets/logo.png" alt="SyncView 로고" width="120">
 
 여러 로컬 동영상을 그리드로 비교하고, 재생 시점과 디자인을 조정해 하나의 MP4로 저장하는 Windows 데스크톱 도구입니다. 사내·개인 작업을 위해 만들었으며 영상 처리는 로컬에서 수행합니다.
+
+현재 앱 UI는 한국어입니다. 한글·공백이 포함된 파일 경로를 지원하며 원본 영상은 수정하지 않습니다.
 
 ## 주요 기능
 
@@ -93,7 +97,7 @@ FFmpeg 실행 파일은 Git에 포함되지 않습니다. 준비 스크립트는
 .\.venv\Scripts\python.exe -m PyInstaller VideoMultiView.spec
 ~~~
 
-결과는 **dist/SyncView.exe**입니다. 단일 EXE는 첫 실행 때 포함된 라이브러리를 임시 폴더에 해제하므로 시작에 시간이 걸릴 수 있습니다.
+결과는 **dist/SyncView.exe**입니다. 단일 EXE는 실행할 때 포함된 라이브러리를 임시 폴더에 해제하므로 시작에 시간이 걸릴 수 있습니다.
 
 기본 테스트는 FFmpeg로 생성한 작은 영상으로 실행하며 개인 test_assets는 필요하지 않습니다. FFmpeg가 없으면 미디어 fixture를 사용하는 테스트는 건너뜁니다. 전체 검증 전에는 미디어 준비 스크립트를 실행하세요.
 
@@ -133,4 +137,6 @@ FFmpeg 실행 파일은 Git에 포함되지 않습니다. 준비 스크립트는
 
 소스, 테스트, 문서, 로고, constraints 및 빌드 설정을 포함합니다. 개발 가상환경, 캐시, scratch, 개인 영상, export 결과, FFmpeg 실행 파일, dist는 .gitignore로 제외합니다. 사용자 프로젝트를 projects 폴더에 저장하면 Git에서 제외됩니다.
 
-프로젝트 자체 라이선스는 아직 지정하지 않았습니다. 사용한 외부 구성요소의 고지는 앱 도움말과 해당 프로젝트의 배포 자료를 참고하세요.
+## 라이선스
+
+프로젝트 자체 라이선스는 아직 지정하지 않았습니다. 외부 구성요소에는 각 구성요소의 라이선스가 별도로 적용됩니다. 사용한 외부 구성요소의 고지는 앱 도움말과 해당 프로젝트의 배포 자료를 참고하세요. 번들 FFmpeg는 GPLv3-or-later 빌드이며 세부 정보는 [미디어 도구 안내](vendor/ffmpeg/README.md)에 있습니다.
