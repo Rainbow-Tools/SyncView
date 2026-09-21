@@ -1,0 +1,45 @@
+# Python development environments and caches
+.venv/
+.tools/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Generated packages, experiments and local work
+build/
+dist/
+artifacts/
+scratch/
+exports/
+projects/
+*.log
+*.tmp
+.*_dec.png
+*.tmp.mp4
+/project.json
+
+# Private media and downloaded executables
+test_assets/
+*.mp4
+*.mkv
+*.mov
+*.avi
+*.webm
+*.wav
+*.mp3
+vendor/ffmpeg/*.exe
+vendor/ffmpeg/doc/
+
+# Personal settings and OS metadata
+.env
+.env.*
+!.env.example
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+Desktop.ini
