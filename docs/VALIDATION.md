@@ -81,7 +81,7 @@ python scripts/benchmark_playback.py --counts 9 --output artifacts/playback-auto
 
 단일 EXE만 둔 별도 폴더에서 PATH를 Windows 시스템 디렉터리로 제한하여 실행했다. 원본 두 개는 기본 재생으로, 합성 영상 아홉 개는 소프트웨어 재생으로 검사했고 모두 프레임 준비와 MP4 저장에 성공했다. 번들 임시 경로의 FFmpeg·FFprobe 사용, 한글·동적 이름표, 640×360·30fps 출력과 선택한 AAC 오디오를 확인했다. 새 Windows VM에서 Python을 제거한 검증은 수행하지 않았으며, 같은 PC에서 경로를 격리한 검사다.
 
-- 결과: dist/SyncView.exe, 133,354,615바이트.
+- 라이선스 정리 전 빌드 결과: dist/SyncView.exe, 133,354,615바이트.
 - SHA256: 12de52fe089285ab88a3307e604ffbc937d1d8cfb1b77561e6843f3306eb87f6.
 - wheel에도 패키지 내부 logo.png·logo.ico 두 리소스가 포함되는지 확인했다.
 - 검증용 실행 옵션: `SyncView.exe --verify-project <프로젝트.json> --verify-output <결과폴더>`. 소프트웨어 경로는 `--software-decode`를 함께 지정한다. 이 모드는 미리보기 이미지, MP4와 verification.json을 생성하고 종료한다.
@@ -89,6 +89,17 @@ python scripts/benchmark_playback.py --counts 9 --output artifacts/playback-auto
 ## GitHub 파일 점검
 
 .gitignore 적용 후 포함 대상은 50개 파일, 합계 약 1.25MB이며 최대 파일은 약 709KB인 로고 PNG다. 소스·문서·테스트·설정에서 개인 사용자 경로, 일반적인 인증 토큰과 개인키 패턴은 발견하지 않았다. JSON 전체 제외 규칙은 없으며 개인 프로젝트·영상·FFmpeg EXE·빌드·검증 산출물은 지정 경로와 확장자로 제외한다. 로컬 원본 영상과 FFmpeg 실행 파일은 보존했다.
+
+## 라이선스·README 변경 검증 (2026-09-22)
+
+- 전체 테스트: **82 passed, 1 skipped**. Ruff 검사와 포맷 검사를 통과했다. 이번 변경에 성능 재측정은 포함하지 않는다.
+- Python wheel의 `License-Expression: MIT`와 라이선스 파일 10개를 확인했다. 실행 파일·개인 영상은 wheel에 포함되지 않는다.
+- 수정한 spec으로 EXE를 다시 빌드했다. 최종 CArchive 항목 225개에서 `virtualkeyboard` 관련 DLL·플러그인이 없고, MIT·외부 고지·주요 라이선스 원문이 포함됨을 확인했다.
+- 새 EXE 크기: **133,234,596바이트**. SHA256: `dab4d558b09e3a696aec503c813b9b95d5979f24eff202e70ccd2ef1167ee694`.
+- EXE만 복사한 별도 폴더에서 PATH를 Windows 시스템 경로로 제한하고 Python 환경 변수를 제거했다. `--software-decode`와 offscreen 검증 모드로 합성 영상 4개 프레임을 확인했으며, 번들 FFmpeg·FFprobe로 H.264·1280×720·30fps·약 5.266초 MP4를 저장했다. 새 Windows VM 검증이나 바이너리 공개 배포는 수행하지 않았다.
+- 한국어·영어 README의 로컬 링크와 이미지 경로를 확인했다. 스크린샷은 실제 앱에서 합성 영상 4개를 재생한 결과이며 개인 영상은 사용하지 않았다.
+
+이 실행 검증은 EXE 재배포 조건을 모두 충족했다는 뜻이 아니다. 대응 소스·전체 구성요소 고지·Qt 재결합 절차의 남은 준비는 [라이선스 검토](LICENSING.md)를 따른다.
 
 ## 남은 범위
 

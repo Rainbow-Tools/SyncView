@@ -4,9 +4,30 @@
 
 <img src="src/videos_multi_view/assets/logo.png" alt="SyncView logo" width="120">
 
-A Windows desktop tool for comparing local videos in a grid, adjusting their timing and appearance, and exporting the composition as a single MP4. Built for personal and internal use, SyncView processes videos locally.
+## Compare in one view. Share one video.
 
-The application UI is currently in Korean. File paths containing Korean characters and spaces are supported, and source videos are never modified.
+Play your clips together, align their start times, and label the results. **SyncView is a Windows desktop tool that takes local videos from comparison to a shareable MP4.**
+
+**One playback bar · Per-video timing · Editable projects · Local processing**
+
+[Install and run](#development-setup) · [Workflow](#workflow) · [Shortcuts](#keyboard-shortcuts) · [Fit and alternatives](docs/POSITIONING.md) (Korean)
+
+![Actual SyncView application comparing four synthetic clips in a grid](docs/assets/syncview-preview.png)
+
+*Four synthetic test clips playing in the actual application. Per-video labels and timecodes can also appear in the exported MP4.*
+
+## When to use it
+
+| Your task | What you can produce |
+|---|---|
+| Compare model outputs, filters, or rendering variants | A single view of multiple candidates, with settings identified by labels |
+| Compare takes that start at different times | Shared playback with manually adjusted offsets for each video |
+| Prepare a review, presentation, or feedback clip | One MP4 that viewers can play without installing SyncView |
+| Revisit the same comparison later | A JSON project retaining order, layout, timing, and styling |
+
+Using the app requires no account or video upload, and source files stay untouched. Mix portrait and landscape footage while preserving aspect ratios. Korean labels and file paths containing Korean characters or spaces are supported.
+
+**Getting started:** Windows x64; the application UI is currently Korean. This repository provides source code, so follow the setup steps below. A single EXE can also be built. For pixel-level quality analysis or frame-accurate measurement, review the [scope and limitations](#scope-and-limitations) first.
 
 ## Features
 
@@ -144,4 +165,6 @@ The repository includes source code, tests, documentation, logos, dependency con
 
 ## License
 
-SyncView has not yet been assigned a project license. Third-party components retain their own licenses. Refer to the in-app notices and each component's distribution materials. The bundled FFmpeg build is GPLv3-or-later; see the [media tool setup guide](vendor/ffmpeg/README.md) for details.
+SyncView's original application code and documentation are **[MIT licensed](LICENSE)**. Commercial use, modification, and redistribution are permitted with the copyright and license notice retained.
+
+Third-party components retain their own licenses. The export FFmpeg CLI is GPL-3.0-or-later, Qt's preview FFmpeg libraries are LGPL-2.1-or-later, and the PySide6/Qt modules used here follow LGPLv3. Redistributing an EXE requires satisfying the applicable notices, corresponding-source, Qt recombination, and other conditions. See [third-party notices](THIRD_PARTY_NOTICES.md) and the [licensing review and binary-release scope](docs/LICENSING.md) (Korean).

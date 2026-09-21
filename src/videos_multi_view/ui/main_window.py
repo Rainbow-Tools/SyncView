@@ -444,9 +444,10 @@ class MainWindow(QMainWindow):
             "<p>단축키: <code>F1</code> 키를 눌러 상세 설명서를 확인하세요.</p>"
             "<hr style='border: none; border-top: 1px solid #1E293B;'>"
             "<p><b>오픈소스 라이선스 안내:</b><br>"
-            "SyncView는 <b>FFmpeg (GPLv3)</b>, <b>PySide6/Qt 6 (LGPLv3)</b>, "
-            "<b>Python (PSFL)</b>, <b>Pretendard (OFL)</b> 등의<br>"
-            "오픈소스 소프트웨어를 포함하거나 활용합니다.<br>"
+            "SyncView 자체 코드: <b>MIT</b>.<br>"
+            "외부 구성요소: <b>FFmpeg CLI (GPLv3-or-later)</b>, "
+            "<b>Qt의 FFmpeg (LGPLv2.1-or-later)</b>, "
+            "<b>PySide6/Qt (LGPLv3)</b>, <b>Python (PSF)</b> 등.<br>"
             "자세한 고지는 <b>[도움말] &gt; [오픈소스 라이선스 고지]</b>에서 "
             "확인하실 수 있습니다.</p>",
         )

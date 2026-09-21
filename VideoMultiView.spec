@@ -15,12 +15,19 @@ a = Analysis(
     binaries=[(str(media / name), "vendor/ffmpeg") for name in ("ffmpeg.exe", "ffprobe.exe")],
     datas=collect_data_files("videos_multi_view")
     + [
+        (str(root / "LICENSE"), "."),
+        (str(root / "THIRD_PARTY_NOTICES.md"), "."),
+        (str(root / "licenses"), "licenses"),
+        (str(root / "docs" / "LICENSING.md"), "docs"),
         (str(media / "README.md"), "vendor/ffmpeg"),
         (str(media / "LICENSE"), "vendor/ffmpeg"),
     ],
     hiddenimports=["PySide6.QtMultimedia"],
     excludes=["pytest", "ruff"],
 )
+# Qt's default plugin collection includes this GPL-only module. This Widgets
+# application does not use it; remove both the plugin and its library.
+a.binaries = [entry for entry in a.binaries if "virtualkeyboard" not in entry[0].lower()]
 pyz = PYZ(a.pure)
 exe = EXE(
     pyz,

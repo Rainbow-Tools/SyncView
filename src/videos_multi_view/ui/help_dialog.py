@@ -221,7 +221,10 @@ HELP_SECTIONS = [
         "8. 오픈소스 라이선스 안내",
         """
         <h2>오픈소스 라이선스 고지 (Open Source Licenses)</h2>
-        <p>SyncView는 다음과 같은 오픈소스 소프트웨어 및 리소스를 포함하거나 활용하여 제작되었습니다.</p>
+        <p>SyncView 자체 코드와 문서는 MIT 라이선스입니다.
+        외부 구성요소에는 각 라이선스가 별도로 적용됩니다.
+        <a href="https://github.com/Rainbow-Tools/SyncView/blob/main/LICENSE">MIT 원문</a> ·
+        <a href="https://github.com/Rainbow-Tools/SyncView/blob/main/THIRD_PARTY_NOTICES.md">외부 구성요소 고지</a></p>
 
         <table border="1" cellpadding="8" style="border-collapse: collapse; width: 100%; border-color: #1E293B;">
             <tr style="background-color: #172338; color: #60A5FA;">
@@ -230,8 +233,8 @@ HELP_SECTIONS = [
                 <th>저작권자 / 웹사이트</th>
             </tr>
             <tr>
-                <td><b>FFmpeg & FFprobe</b></td>
-                <td>GNU General Public License v3.0 (GPLv3)</td>
+                <td><b>FFmpeg & FFprobe CLI</b></td>
+                <td>GNU GPL v3.0 or later</td>
                 <td>Copyright (c) 2000-2026 the FFmpeg developers<br><a href="https://ffmpeg.org" style="color: #60A5FA;">https://ffmpeg.org</a></td>
             </tr>
             <tr>
@@ -240,26 +243,33 @@ HELP_SECTIONS = [
                 <td>Copyright (c) The Qt Company Ltd. and other contributors<br><a href="https://www.qt.io" style="color: #60A5FA;">https://www.qt.io</a></td>
             </tr>
             <tr>
+                <td><b>Qt의 FFmpeg 라이브러리</b></td>
+                <td>GNU LGPL v2.1 or later (검증 빌드 7.1.5)</td>
+                <td>FFmpeg developers and contributors</td>
+            </tr>
+            <tr>
                 <td><b>Python Runtime</b></td>
                 <td>Python Software Foundation License (PSFL)</td>
                 <td>Copyright (c) 2001-2026 Python Software Foundation<br><a href="https://www.python.org" style="color: #60A5FA;">https://www.python.org</a></td>
             </tr>
             <tr>
-                <td><b>Pretendard Font</b></td>
-                <td>SIL Open Font License 1.1 (OFL-1.1)</td>
-                <td>Copyright (c) 2021 Kil Hyung-jin<br><a href="https://github.com/orioncactus/pretendard" style="color: #60A5FA;">GitHub @orioncactus/pretendard</a></td>
+                <td><b>PyInstaller</b></td>
+                <td>GPLv2-or-later + bootloader exception; runtime hooks: Apache-2.0</td>
+                <td>PyInstaller Development Team and contributors</td>
             </tr>
         </table>
 
         <h3>외부 구성요소 안내</h3>
         <ul>
-            <li><b>FFmpeg (GPLv3):</b> 본 프로그램에 동봉된 FFmpeg 및 FFprobe 바이너리는 GPLv3 라이선스 하에 배포됩니다. FFmpeg의 소스 코드는 공식 웹사이트(<a href="https://ffmpeg.org" style="color: #60A5FA;">https://ffmpeg.org</a>)에서 무료로 다운로드하실 수 있습니다.</li>
-            <li><b>PySide6 / Qt 6 (LGPLv3):</b> 라이선스 전문과 Qt 소스 코드는 공식 웹사이트(<a href="https://www.qt.io" style="color: #60A5FA;">https://www.qt.io</a>)에서 확인할 수 있습니다.</li>
+            <li><b>FFmpeg:</b> export용 GPL CLI와 미리보기용 LGPL 라이브러리는 다른 빌드입니다. 대응 소스 제공 등 각 라이선스의 재배포 조건을 따릅니다.</li>
+            <li><b>PySide6 / Qt 6:</b> 사용하는 LGPL 모듈의 고지·소스 제공·재결합 조건을 따릅니다. 사용하지 않는 GPL 전용 Qt Virtual Keyboard는 빌드에서 제외합니다.</li>
             <li><b>글꼴:</b> Pretendard 등 사용자 PC에 설치된 글꼴을 사용하며 글꼴 파일 자체는 앱에 포함하지 않습니다.</li>
         </ul>
 
         <p style="color: #94A3B8; font-size: 11px; margin-top: 20px;">
-        각 오픈소스 라이선스 전문은 해당 프로젝트의 공식 배포처 및 웹사이트에서 열람하실 수 있습니다.
+        주요 라이선스 원문은 번들의 LICENSE와 licenses 폴더에 포함됩니다.
+        배포 범위와 대응 소스 준비에 관한 검토는
+        <a href="https://github.com/Rainbow-Tools/SyncView/blob/main/docs/LICENSING.md">라이선스 검토 문서</a>를 참고하세요.
         </p>
         """,
     ),
