@@ -10,7 +10,7 @@ Play your clips together, align their start times, and label the results. **Sync
 
 **One playback bar · Per-video timing · Editable projects · Local processing**
 
-[Run SyncView](#run-without-installing-dependencies) · [Workflow](#workflow) · [Shortcuts](#keyboard-shortcuts) · [Fit and alternatives](docs/POSITIONING.md) (Korean)
+[Run SyncView](#run-without-installing-dependencies) · [Workflow](#workflow) · [Shortcuts](#keyboard-shortcuts) · [Changelog](CHANGELOG.md) · [Fit and alternatives](docs/POSITIONING.md) (Korean)
 
 ![English SyncView application comparing four synthetic clips in a grid](docs/assets/syncview-preview-en.png)
 

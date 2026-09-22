@@ -47,6 +47,7 @@ def package_portable(root: Path) -> Path:
             "THIRD_PARTY_NOTICES.md",
             "README.md",
             "README.en.md",
+            "CHANGELOG.md",
             "AGENTS.md",
             ".gitignore",
         )

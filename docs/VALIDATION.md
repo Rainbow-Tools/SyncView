@@ -111,6 +111,14 @@ python scripts/benchmark_playback.py --counts 9 --output artifacts/playback-auto
 - 수정 후 최종 단일 EXE도 별도 폴더와 제한된 PATH에서 영어 UI·영상 4개 미리보기·MP4 출력에 성공했다. 크기는 133,253,398바이트, SHA256은 `ab9927b221e6d5aaa517c0351ec97296b74ef456b0a1ae5aeed2886ba5f7c07c`다.
 - Qt 번역 파일은 [Qt Translations 6.11.2의 파일별 규칙](https://github.com/qt/qttranslations/blob/v6.11.2/licenseRule.json)에 따라 LGPLv3 경로로 취급한다. 공개 바이너리 배포를 위한 전체 대응 소스·고지 준비는 여전히 별도 작업이다.
 
+## 1.1.0 소스 태그 검증 (2026-09-22)
+
+- 언어 선택과 포터블 패키징은 호환되는 기능 추가이므로 MINOR를 올려 1.1.0으로 정했다. 앱 버전 두 곳을 일치시키고, 프로젝트 JSON 스키마는 버전 1을 유지했다. 버전 규칙은 `AGENTS.md`, 변경 사항은 `CHANGELOG.md`에 기록했다.
+- 전체 테스트를 다시 실행해 **92 passed, 1 skipped**를 확인했다(15.36초). 제외된 항목은 개인 영상 선택 테스트다. Ruff 검사·포맷 검사와 `git diff --check`를 통과했다.
+- 네트워크 없이 wheel을 생성해 패키지 메타데이터와 런타임 버전이 모두 1.1.0임을 확인했다. MIT 메타데이터·로고 리소스를 포함하며 실행 파일·개인 영상은 포함하지 않는다.
+- Git 추적 대상에서 빌드 결과·개인 영상·캐시가 제외되고, README 두 언어와 기여 지침·변경 이력의 로컬 링크가 유효함을 확인했다.
+- 이번 버전 확정에서는 소스·wheel을 재검증했으며 EXE·ZIP을 다시 빌드하거나 공개하지 않았다. 위 실행 검증과 해시는 버전 변경 전 빌드 결과다.
+
 ## 남은 범위
 
 - NVIDIA/Intel 하드웨어 인코더의 실제 장비별 성공 여부와 속도는 별도 검증 대상이다. 이번 실제 export 검증은 CPU libx264를 사용했다.
