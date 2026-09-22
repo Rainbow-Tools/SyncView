@@ -18,6 +18,8 @@ from PySide6.QtWidgets import (
 
 from videos_multi_view.core.models import Video
 from videos_multi_view.core.timeline import format_time
+from videos_multi_view.i18n import tr
+from videos_multi_view.ui.translation import bind
 
 
 class VideoListPanel(QWidget):
@@ -40,7 +42,7 @@ class VideoListPanel(QWidget):
         layout.setSpacing(6)
 
         # Header
-        self.title_label = QLabel("영상 목록 (0)")
+        self.title_label = bind(QLabel(), "영상 목록 (0)")
         self.title_label.setStyleSheet("font-weight: bold; font-size: 13px; color: #60A5FA;")
         layout.addWidget(self.title_label)
 
@@ -54,28 +56,28 @@ class VideoListPanel(QWidget):
         btn_layout = QHBoxLayout()
         btn_layout.setSpacing(4)
 
-        self.btn_add = QPushButton("추가")
+        self.btn_add = bind(QPushButton(), "추가")
         self.btn_add.clicked.connect(self._on_add_clicked)
         btn_layout.addWidget(self.btn_add)
 
         self.btn_up = QPushButton("▲")
-        self.btn_up.setToolTip("위로")
+        bind(self.btn_up, "위로", setter="setToolTip")
         self.btn_up.setMaximumWidth(36)
         self.btn_up.clicked.connect(self._on_up_clicked)
         btn_layout.addWidget(self.btn_up)
 
         self.btn_down = QPushButton("▼")
-        self.btn_down.setToolTip("아래로")
+        bind(self.btn_down, "아래로", setter="setToolTip")
         self.btn_down.setMaximumWidth(36)
         self.btn_down.clicked.connect(self._on_down_clicked)
         btn_layout.addWidget(self.btn_down)
 
-        self.btn_delete = QPushButton("삭제")
+        self.btn_delete = bind(QPushButton(), "삭제")
         self.btn_delete.clicked.connect(self._on_delete_clicked)
         btn_layout.addWidget(self.btn_delete)
 
         layout.addLayout(btn_layout)
-        self.btn_relink = QPushButton("원본 다시 연결…")
+        self.btn_relink = bind(QPushButton(), "원본 다시 연결…")
         self.btn_relink.clicked.connect(self._on_relink_clicked)
         layout.addWidget(self.btn_relink)
 
@@ -90,7 +92,7 @@ class VideoListPanel(QWidget):
     def set_videos(self, videos: list[Video], selected_id: str | None = None) -> None:
         self._videos = list(videos)
         self._selected_id = selected_id
-        self.title_label.setText(f"영상 목록 ({len(self._videos)})")
+        bind(self.title_label, "영상 목록 ({value0})", setter="setText", value0=len(self._videos))
 
         self.list_widget.blockSignals(True)
         self.list_widget.clear()
@@ -99,7 +101,7 @@ class VideoListPanel(QWidget):
         for idx, video in enumerate(self._videos):
             name = video.label.text or Path(video.path).name
             dur_str = format_time(video.duration_ms)
-            audio_str = "오디오 있음" if video.has_audio else "무음"
+            audio_str = tr("오디오 있음" if video.has_audio else "무음")
             details = f"{video.width}×{video.height} | {video.fps:.1f}fps | {dur_str} | {audio_str}"
             text = f"{idx + 1}. {name}\n   {details}"
 
@@ -131,6 +133,11 @@ class VideoListPanel(QWidget):
         self.list_widget.blockSignals(False)
         self._update_buttons()
 
+    def retranslate(self) -> None:
+        scroll = self.list_widget.verticalScrollBar().value()
+        self.set_videos(self._videos, self._selected_id)
+        self.list_widget.verticalScrollBar().setValue(scroll)
+
     def set_status(self, text: str, is_error: bool = False) -> None:
         color = "#F87171" if is_error else "#94A3B8"
         self.status_label.setStyleSheet(f"color: {color}; font-size: 11px;")
@@ -148,9 +155,10 @@ class VideoListPanel(QWidget):
     def _on_add_clicked(self) -> None:
         paths, _ = QFileDialog.getOpenFileNames(
             self,
-            "동영상 추가",
+            tr("동영상 추가"),
             "",
-            "동영상 파일 (*.mp4 *.mkv *.mov *.avi *.webm);;모든 파일 (*.*)",
+            tr("동영상 파일 (*.mp4 *.mkv *.mov *.avi *.webm);;모든 파일 (*.*)"),
+            options=QFileDialog.Option.DontUseNativeDialog,
         )
         if paths:
             self.add_files_requested.emit(paths)
@@ -167,7 +175,13 @@ class VideoListPanel(QWidget):
 
     def _on_relink_clicked(self) -> None:
         if self._selected_id:
-            path, _ = QFileDialog.getOpenFileName(self, "원본 영상 다시 연결", "", "영상 (*.*)")
+            path, _ = QFileDialog.getOpenFileName(
+                self,
+                tr("원본 영상 다시 연결"),
+                "",
+                tr("영상 (*.*)"),
+                options=QFileDialog.Option.DontUseNativeDialog,
+            )
             if path:
                 self.relink_requested.emit(self._selected_id, path)
 

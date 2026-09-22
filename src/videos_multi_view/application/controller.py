@@ -10,6 +10,7 @@ from PySide6.QtCore import QObject, Signal
 from videos_multi_view.application.storage import load_project, save_project
 from videos_multi_view.core.layout import calculate_layout
 from videos_multi_view.core.models import Project, Video
+from videos_multi_view.i18n import tr
 from videos_multi_view.media.exporter import ExportJob
 from videos_multi_view.media.player import SyncPlayer
 from videos_multi_view.media.probe import ProbeJob
@@ -108,13 +109,15 @@ class AppController(QObject):
         source = Path(path).resolve()
         canonical = str(source).casefold()
         if not source.is_file():
-            self.probe_status_updated.emit(f"파일을 찾을 수 없습니다: {source.name}", True)
+            self.probe_status_updated.emit(
+                tr("파일을 찾을 수 없습니다: {value0}", value0=source.name), True
+            )
             return
         if canonical in self._pending_paths or (
             relink_id is None and any(Path(v.path).resolve() == source for v in self.project.videos)
         ):
             self.probe_status_updated.emit(
-                f"이미 추가 중이거나 추가된 영상입니다: {source.name}", False
+                tr("이미 추가 중이거나 추가된 영상입니다: {value0}", value0=source.name), False
             )
             return
         self._pending_paths.add(canonical)
@@ -174,14 +177,16 @@ class AppController(QObject):
                     original.offset_ms,
                 )
                 if video.duration_ms + video.offset_ms <= 0:
-                    self.probe_status_updated.emit("교체 영상이 오프셋보다 짧습니다.", True)
+                    self.probe_status_updated.emit(tr("교체 영상이 오프셋보다 짧습니다."), True)
                     continue
                 self.project.videos[self.project.videos.index(original)] = video
             else:
                 self.project.videos.append(video)
             self.selected_video_id = self.selected_video_id or video.id
             changed = True
-            self.probe_status_updated.emit(f"추가/연결 완료: {Path(video.path).name}", False)
+            self.probe_status_updated.emit(
+                tr("추가/연결 완료: {value0}", value0=Path(video.path).name), False
+            )
         if changed:
             self._notify_state_changed()
 
@@ -256,10 +261,10 @@ class AppController(QObject):
 
     def start_export(self, target_path: Path, fps: int | None = None) -> None:
         if self._current_export_job:
-            self.export_failed.emit("이미 다른 내보내기 작업이 진행 중입니다.")
+            self.export_failed.emit(tr("이미 다른 내보내기 작업이 진행 중입니다."))
             return
         if self.current_project_path and target_path.resolve() == self.current_project_path:
-            self.export_failed.emit("프로젝트 파일을 영상으로 덮어쓸 수 없습니다.")
+            self.export_failed.emit(tr("프로젝트 파일을 영상으로 덮어쓸 수 없습니다."))
             return
         snapshot = deepcopy(self.project)
         if fps is not None:

@@ -1,11 +1,12 @@
 """Composite preview canvas maintaining aspect ratio with interactive selection."""
 
 from PySide6.QtCore import QRectF, Qt, Signal
-from PySide6.QtGui import QColor, QFont, QMouseEvent, QPainter, QPaintEvent
+from PySide6.QtGui import QColor, QFont, QFontMetricsF, QMouseEvent, QPainter, QPaintEvent
 from PySide6.QtWidgets import QWidget
 
 from videos_multi_view.core.layout import Cell, Rect, calculate_layout, fit
 from videos_multi_view.core.models import Project
+from videos_multi_view.i18n import tr
 from videos_multi_view.media.player import SyncPlayer
 from videos_multi_view.ui.renderer import DecorationRenderer, render_selection_highlight
 
@@ -128,14 +129,18 @@ class PreviewCanvas(QWidget):
             badge_font = QFont("Pretendard", 10)
             badge_font.setWeight(QFont.Weight.DemiBold)
             painter.setFont(badge_font)
+            text = tr("솔로 뷰 (더블클릭하여 복귀)")
+            badge = QRectF(
+                12, 12, max(210, QFontMetricsF(badge_font).horizontalAdvance(text) + 24), 28
+            )
             painter.setPen(Qt.PenStyle.NoPen)
             painter.setBrush(QColor(0, 0, 0, 180))
-            painter.drawRoundedRect(QRectF(12, 12, 210, 28), 4, 4)
+            painter.drawRoundedRect(badge, 4, 4)
             painter.setPen(QColor("#60A5FA"))
             painter.drawText(
-                QRectF(12, 12, 210, 28),
+                badge,
                 Qt.AlignmentFlag.AlignCenter,
-                "솔로 뷰 (더블클릭하여 복귀)",
+                text,
             )
 
         painter.restore()

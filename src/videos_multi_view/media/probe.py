@@ -8,6 +8,7 @@ from pathlib import Path
 from PySide6.QtCore import QObject, QProcess, QTimer, Signal
 
 from videos_multi_view.core.models import Label, Video
+from videos_multi_view.i18n import tr
 
 from .tools import executable, run_tool
 
@@ -33,12 +34,12 @@ def parse_probe(path: str, data: dict) -> Video:
         None,
     )
     if not stream:
-        raise ValueError("재생 가능한 영상 트랙이 없습니다.")
+        raise ValueError(tr("재생 가능한 영상 트랙이 없습니다."))
     width, height = int(stream["width"]), int(stream["height"])
     duration = _number(stream.get("duration")) or _number(data.get("format", {}).get("duration"))
     fps = _number(stream.get("avg_frame_rate")) or _number(stream.get("r_frame_rate")) or 30.0
     if duration <= 0 or min(width, height) <= 0:
-        raise ValueError("영상 길이 또는 크기를 확인할 수 없습니다.")
+        raise ValueError(tr("영상 길이 또는 크기를 확인할 수 없습니다."))
     rotation = int(float(stream.get("tags", {}).get("rotate", 0)))
     for side in stream.get("side_data_list", []):
         rotation = int(side.get("rotation", rotation))
@@ -112,7 +113,7 @@ class ProbeJob(QObject):
         self.finished.emit()
 
     def _timeout(self) -> None:
-        self._failure = "영상 분석 시간이 초과되었습니다."
+        self._failure = tr("영상 분석 시간이 초과되었습니다.")
         self.process.kill()
 
     def _error(self, error: QProcess.ProcessError) -> None:

@@ -3,7 +3,7 @@
 from copy import deepcopy
 from pathlib import Path
 
-from PySide6.QtCore import Signal
+from PySide6.QtCore import QSignalBlocker, Signal
 from PySide6.QtGui import QColor, QFont
 from PySide6.QtWidgets import (
     QCheckBox,
@@ -25,6 +25,10 @@ from PySide6.QtWidgets import (
 )
 
 from videos_multi_view.core.models import POSITIONS, Project, Video
+from videos_multi_view.i18n import tr
+from videos_multi_view.ui.translation import bind
+
+POSITION_LABELS = ("왼쪽 위", "오른쪽 위", "왼쪽 아래", "오른쪽 아래")
 
 
 class ColorButton(QPushButton):
@@ -61,8 +65,9 @@ class ColorButton(QPushButton):
         c = QColorDialog.getColor(
             QColor(self._color),
             self,
-            "색상 선택",
-            QColorDialog.ColorDialogOption.ShowAlphaChannel,
+            tr("색상 선택"),
+            QColorDialog.ColorDialogOption.ShowAlphaChannel
+            | QColorDialog.ColorDialogOption.DontUseNativeDialog,
         )
         if c.isValid():
             # Format as #AARRGGBB if alpha < 255, else #RRGGBB
@@ -100,8 +105,9 @@ class SettingsPanel(QWidget):
         layout.setSpacing(10)
 
         # 1. Canvas & Grid Settings Group
-        grid_group = QGroupBox("그리드 설정")
+        grid_group = bind(QGroupBox(), "그리드 설정", setter="setTitle")
         grid_form = QFormLayout(grid_group)
+        grid_form.setRowWrapPolicy(QFormLayout.RowWrapPolicy.WrapLongRows)
 
         # Output resolution
         res_layout = QHBoxLayout()
@@ -118,14 +124,14 @@ class SettingsPanel(QWidget):
         self.spin_height.setValue(1080)
         self.spin_height.valueChanged.connect(self._on_canvas_dim_changed)
         res_layout.addWidget(self.spin_height)
-        grid_form.addRow("해상도", res_layout)
+        grid_form.addRow(bind(QLabel(), "해상도"), res_layout)
 
         # Columns
         self.spin_columns = QSpinBox()
         self.spin_columns.setRange(0, 9)
-        self.spin_columns.setSpecialValueText("자동")
+        bind(self.spin_columns, "자동", setter="setSpecialValueText")
         self.spin_columns.valueChanged.connect(self._on_layout_changed)
-        grid_form.addRow("열 수", self.spin_columns)
+        grid_form.addRow(bind(QLabel(), "열 수"), self.spin_columns)
 
         # Gap and Margin
         self.spin_gap = QSpinBox()
@@ -133,22 +139,22 @@ class SettingsPanel(QWidget):
         self.spin_gap.setSingleStep(2)
         self.spin_gap.setValue(8)
         self.spin_gap.valueChanged.connect(self._on_layout_changed)
-        grid_form.addRow("간격", self.spin_gap)
+        grid_form.addRow(bind(QLabel(), "간격"), self.spin_gap)
 
         self.spin_margin = QSpinBox()
         self.spin_margin.setRange(0, 200)
         self.spin_margin.setSingleStep(2)
         self.spin_margin.setValue(16)
         self.spin_margin.valueChanged.connect(self._on_layout_changed)
-        grid_form.addRow("여백", self.spin_margin)
+        grid_form.addRow(bind(QLabel(), "여백"), self.spin_margin)
 
         # Background color
         self.btn_bg_color = ColorButton("#15191f")
         self.btn_bg_color.color_changed.connect(self._on_layout_changed)
-        grid_form.addRow("배경색", self.btn_bg_color)
+        grid_form.addRow(bind(QLabel(), "배경색"), self.btn_bg_color)
 
         # Border
-        self.chk_border = QCheckBox("테두리")
+        self.chk_border = bind(QCheckBox(), "테두리")
         self.chk_border.toggled.connect(self._on_layout_changed)
         grid_form.addRow("", self.chk_border)
 
@@ -156,67 +162,76 @@ class SettingsPanel(QWidget):
         self.spin_border_w.setRange(1, 50)
         self.spin_border_w.setValue(2)
         self.spin_border_w.valueChanged.connect(self._on_layout_changed)
-        grid_form.addRow("두께", self.spin_border_w)
+        grid_form.addRow(bind(QLabel(), "두께"), self.spin_border_w)
 
         self.btn_border_color = ColorButton("#ffffff")
         self.btn_border_color.color_changed.connect(self._on_layout_changed)
-        grid_form.addRow("색상", self.btn_border_color)
+        grid_form.addRow(bind(QLabel(), "색상"), self.btn_border_color)
 
         layout.addWidget(grid_group)
 
         # 2. Selected Video & Label Settings Group
-        self.video_group = QGroupBox("영상 설정")
+        self.video_group = bind(QGroupBox(), "영상 설정", setter="setTitle")
         vid_form = QFormLayout(self.video_group)
+        vid_form.setRowWrapPolicy(QFormLayout.RowWrapPolicy.WrapLongRows)
 
         self.spin_offset = QSpinBox()
         self.spin_offset.setRange(-600000, 600000)
         self.spin_offset.setSingleStep(100)
         self.spin_offset.setSuffix(" ms")
         self.spin_offset.valueChanged.connect(self._on_video_changed)
-        vid_form.addRow("오프셋", self.spin_offset)
+        vid_form.addRow(bind(QLabel(), "오프셋"), self.spin_offset)
 
         self.edit_label_text = QLineEdit()
-        self.edit_label_text.setPlaceholderText("이름표 문구 ({filename}, {timecode} 등)")
-        self.edit_label_text.setToolTip(
-            "지원 매크로: {filename}, {timecode}, {fps}, {resolution}, {offset}"
+        bind(
+            self.edit_label_text,
+            "이름표 문구 ({filename}, {timecode} 등)",
+            setter="setPlaceholderText",
+        )
+        bind(
+            self.edit_label_text,
+            "지원 매크로: {filename}, {timecode}, {fps}, {resolution}, {offset}",
+            setter="setToolTip",
         )
         self.edit_label_text.textChanged.connect(self._on_video_changed)
-        vid_form.addRow("이름표", self.edit_label_text)
+        vid_form.addRow(bind(QLabel(), "이름표"), self.edit_label_text)
 
-        self.chk_label_vis = QCheckBox("표시")
+        self.chk_label_vis = bind(QCheckBox(), "표시")
         self.chk_label_vis.toggled.connect(self._on_video_changed)
         vid_form.addRow("", self.chk_label_vis)
 
         self.combo_label_pos = QComboBox()
-        self.combo_label_pos.addItems(list(POSITIONS))
-        self.combo_label_pos.currentTextChanged.connect(self._on_video_changed)
-        vid_form.addRow("위치", self.combo_label_pos)
+        for code, label in zip(POSITIONS, POSITION_LABELS, strict=True):
+            self.combo_label_pos.addItem(tr(label), code)
+        self.combo_label_pos.currentIndexChanged.connect(self._on_video_changed)
+        vid_form.addRow(bind(QLabel(), "위치"), self.combo_label_pos)
 
         self.combo_label_font = QFontComboBox()
         self.combo_label_font.currentFontChanged.connect(self._on_video_changed)
-        vid_form.addRow("글꼴", self.combo_label_font)
+        vid_form.addRow(bind(QLabel(), "글꼴"), self.combo_label_font)
 
         self.spin_label_size = QSpinBox()
         self.spin_label_size.setRange(8, 120)
         self.spin_label_size.setValue(28)
         self.spin_label_size.valueChanged.connect(self._on_video_changed)
-        vid_form.addRow("크기", self.spin_label_size)
+        vid_form.addRow(bind(QLabel(), "크기"), self.spin_label_size)
 
         self.btn_label_color = ColorButton("#ffffff")
         self.btn_label_color.color_changed.connect(self._on_video_changed)
-        vid_form.addRow("색상", self.btn_label_color)
+        vid_form.addRow(bind(QLabel(), "색상"), self.btn_label_color)
 
         self.btn_label_bg = ColorButton("#b3000000")
         self.btn_label_bg.color_changed.connect(self._on_video_changed)
-        vid_form.addRow("배경", self.btn_label_bg)
+        vid_form.addRow(bind(QLabel(), "배경"), self.btn_label_bg)
 
         layout.addWidget(self.video_group)
 
         # 3. Export Settings Group
-        export_group = QGroupBox("내보내기")
+        export_group = bind(QGroupBox(), "내보내기", setter="setTitle")
         export_layout = QVBoxLayout(export_group)
 
         exp_form = QFormLayout()
+        exp_form.setRowWrapPolicy(QFormLayout.RowWrapPolicy.WrapLongRows)
         self.combo_fps = QComboBox()
         self.combo_fps.addItems(["24", "30", "60"])
         self.combo_fps.setCurrentText("30")
@@ -224,30 +239,30 @@ class SettingsPanel(QWidget):
         exp_form.addRow("FPS", self.combo_fps)
 
         self.combo_encoder = QComboBox()
-        self.combo_encoder.addItem("CPU (libx264 - 기본)", "libx264")
+        self.combo_encoder.addItem(tr("CPU (libx264 - 기본)"), "libx264")
         self.combo_encoder.addItem("NVIDIA GPU (h264_nvenc)", "h264_nvenc")
         self.combo_encoder.addItem("Intel GPU (h264_qsv)", "h264_qsv")
         self.combo_encoder.currentIndexChanged.connect(self._on_output_changed)
-        exp_form.addRow("인코더", self.combo_encoder)
+        exp_form.addRow(bind(QLabel(), "인코더"), self.combo_encoder)
 
         path_layout = QHBoxLayout()
         self.edit_export_path = QLineEdit()
-        self.edit_export_path.setPlaceholderText("저장할 MP4 경로...")
+        bind(self.edit_export_path, "저장할 MP4 경로...", setter="setPlaceholderText")
         path_layout.addWidget(self.edit_export_path)
-        self.btn_browse_export = QPushButton("찾기")
+        self.btn_browse_export = bind(QPushButton(), "찾기")
         self.btn_browse_export.clicked.connect(self._on_browse_export)
         path_layout.addWidget(self.btn_browse_export)
-        exp_form.addRow("경로", path_layout)
+        exp_form.addRow(bind(QLabel(), "경로"), path_layout)
 
         export_layout.addLayout(exp_form)
 
         btn_exp_layout = QHBoxLayout()
-        self.btn_export = QPushButton("내보내기")
+        self.btn_export = bind(QPushButton(), "내보내기")
         self.btn_export.setObjectName("primaryButton")
         self.btn_export.clicked.connect(self._on_export_clicked)
         btn_exp_layout.addWidget(self.btn_export)
 
-        self.btn_cancel_export = QPushButton("취소")
+        self.btn_cancel_export = bind(QPushButton(), "취소")
         self.btn_cancel_export.setEnabled(False)
         self.btn_cancel_export.clicked.connect(self.export_cancelled.emit)
         btn_exp_layout.addWidget(self.btn_cancel_export)
@@ -306,7 +321,7 @@ class SettingsPanel(QWidget):
             self.spin_offset.setValue(v.offset_ms)
             self.edit_label_text.setText(v.label.text)
             self.chk_label_vis.setChecked(v.label.visible)
-            self.combo_label_pos.setCurrentText(v.label.position)
+            self.combo_label_pos.setCurrentIndex(self.combo_label_pos.findData(v.label.position))
             self.spin_label_size.setValue(v.label.size)
             self.btn_label_color.set_color(v.label.color)
             self.btn_label_bg.set_color(v.label.background)
@@ -322,9 +337,9 @@ class SettingsPanel(QWidget):
         self.video_group.setEnabled(has_sel)
         if has_sel:
             name = self._selected_video.label.text or Path(self._selected_video.path).stem
-            self.video_group.setTitle(f"영상 설정: {name}")
+            bind(self.video_group, "영상 설정: {value0}", setter="setTitle", value0=name)
         else:
-            self.video_group.setTitle("영상 설정 (선택 없음)")
+            bind(self.video_group, "영상 설정 (선택 없음)", setter="setTitle")
 
     def _on_canvas_dim_changed(self) -> None:
         if self._blocking:
@@ -356,7 +371,7 @@ class SettingsPanel(QWidget):
         v.offset_ms = self.spin_offset.value()
         v.label.text = self.edit_label_text.text()
         v.label.visible = self.chk_label_vis.isChecked()
-        v.label.position = self.combo_label_pos.currentText()
+        v.label.position = self.combo_label_pos.currentData()
         v.label.size = self.spin_label_size.value()
         v.label.color = self.btn_label_color.color
         v.label.background = self.btn_label_bg.color
@@ -371,12 +386,19 @@ class SettingsPanel(QWidget):
         output.encoder = self.combo_encoder.currentData() or "libx264"
         self.settings_requested.emit("output", output)
 
+    def retranslate(self) -> None:
+        with QSignalBlocker(self.combo_label_pos), QSignalBlocker(self.combo_encoder):
+            for index, source in enumerate(POSITION_LABELS):
+                self.combo_label_pos.setItemText(index, tr(source))
+            self.combo_encoder.setItemText(0, tr("CPU (libx264 - 기본)"))
+
     def _on_browse_export(self) -> None:
         path, _ = QFileDialog.getSaveFileName(
             self,
-            "MP4 저장 경로 선택",
+            tr("MP4 저장 경로 선택"),
             self.edit_export_path.text() or "output.mp4",
-            "MP4 영상 (*.mp4)",
+            tr("MP4 영상 (*.mp4)"),
+            options=QFileDialog.Option.DontUseNativeDialog,
         )
         if path:
             self.edit_export_path.setText(path)
@@ -399,12 +421,12 @@ class SettingsPanel(QWidget):
         self.progress_bar.setVisible(exporting)
         if exporting:
             self.progress_bar.setValue(0)
-            self.export_status_label.setText("인코딩 중...")
+            bind(self.export_status_label, "인코딩 중...", setter="setText")
 
     def update_export_progress(self, progress: float) -> None:
         self.progress_bar.setValue(int(progress * 100))
 
-    def set_export_status(self, text: str, is_error: bool = False) -> None:
+    def set_export_status(self, source: str, is_error: bool = False, **values: object) -> None:
         color = "#F87171" if is_error else "#60A5FA"
         self.export_status_label.setStyleSheet(f"color: {color}; font-size: 11px;")
-        self.export_status_label.setText(text)
+        bind(self.export_status_label, source, **values)

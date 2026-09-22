@@ -14,6 +14,7 @@ from PySide6.QtCore import QObject, QThread, Signal
 from videos_multi_view.core.layout import calculate_layout
 from videos_multi_view.core.models import Project
 from videos_multi_view.core.timeline import duration_ms, source_time_ms
+from videos_multi_view.i18n import tr
 from videos_multi_view.media.tools import executable
 from videos_multi_view.ui.renderer import DecorationRenderer
 
@@ -72,6 +73,7 @@ class _ExportWorker(QThread):
         self.lock = Lock()
         self.process: subprocess.Popen | None = None
         self.error = ""
+        self.cleanup_failed = False
         self.success = False
 
     def cancel(self) -> None:
@@ -92,7 +94,7 @@ class _ExportWorker(QThread):
             project = self.project
             project.validate()
             if not project.videos or duration_ms(project) <= 0:
-                raise ValueError("합성할 재생 구간이 없습니다.")
+                raise ValueError(tr("합성할 재생 구간이 없습니다."))
             for video in project.videos:
                 source = Path(video.path)
                 if source.resolve() == self.target or (
@@ -100,13 +102,15 @@ class _ExportWorker(QThread):
                     and source.exists()
                     and os.path.samefile(source, self.target)
                 ):
-                    raise ValueError("출력 경로가 원본 영상 파일과 같습니다.")
+                    raise ValueError(tr("출력 경로가 원본 영상 파일과 같습니다."))
                 if not source.is_file():
-                    raise ValueError(f"원본 파일을 다시 연결하세요: {source.name}")
+                    raise ValueError(
+                        tr("원본 파일을 다시 연결하세요: {value0}", value0=source.name)
+                    )
             if not self.target.parent.is_dir():
-                raise ValueError("출력 폴더가 없습니다.")
+                raise ValueError(tr("출력 폴더가 없습니다."))
             if self.target.is_dir():
-                raise ValueError("출력 위치가 파일이 아닌 폴더입니다.")
+                raise ValueError(tr("출력 위치가 파일이 아닌 폴더입니다."))
             renderer = DecorationRenderer(project, calculate_layout(project))
             args = ["-hide_banner", "-loglevel", "error", "-nostdin", "-y"]
             for video in project.videos:
@@ -126,7 +130,7 @@ class _ExportWorker(QThread):
                 ]
             else:
                 if not renderer.image().save(str(overlay)):
-                    raise OSError("이름표 이미지를 저장할 수 없습니다.")
+                    raise OSError(tr("이름표 이미지를 저장할 수 없습니다."))
                 args += ["-loop", "1", "-framerate", str(project.output.fps), "-i", str(overlay)]
             graph, audio = build_filter_complex(project)
             args += ["-filter_complex", graph, "-map", "[vout]"]
@@ -187,7 +191,7 @@ class _ExportWorker(QThread):
                     while remaining and not self.cancel_event.is_set():
                         written = process.stdin.write(remaining)
                         if not written:
-                            raise BrokenPipeError("FFmpeg 입력 파이프가 닫혔습니다.")
+                            raise BrokenPipeError(tr("FFmpeg 입력 파이프가 닫혔습니다."))
                         remaining = remaining[written:]
                 process.stdin.close()
             code = process.wait()
@@ -196,7 +200,7 @@ class _ExportWorker(QThread):
             with self.lock:
                 if not self.cancel_event.is_set():
                     if code != 0 or not temporary.is_file():
-                        raise RuntimeError("".join(errors) or "FFmpeg 인코딩이 실패했습니다.")
+                        raise RuntimeError("".join(errors) or tr("FFmpeg 인코딩이 실패했습니다."))
                     os.replace(temporary, self.target)
                     self.success = True
         except Exception as exc:
@@ -216,7 +220,10 @@ class _ExportWorker(QThread):
                 try:
                     path.unlink(missing_ok=True)
                 except OSError as exc:
-                    self.error += f"\n임시 파일 정리 실패: {path.name}: {exc}"
+                    self.cleanup_failed = True
+                    self.error += tr(
+                        "\n임시 파일 정리 실패: {value0}: {value1}", value0=path.name, value1=exc
+                    )
 
 
 class ExportJob(QObject):
@@ -240,7 +247,7 @@ class ExportJob(QObject):
         try:
             self.project.validate()
             if any(Path(v.path).resolve() == self.target_path for v in self.project.videos):
-                raise ValueError("출력 경로가 원본 영상 파일과 같습니다.")
+                raise ValueError(tr("출력 경로가 원본 영상 파일과 같습니다."))
         except (ValueError, TypeError) as exc:
             self._settled = True
             self.failed.emit(str(exc))
@@ -263,11 +270,9 @@ class ExportJob(QObject):
         if worker.success:
             self.progress.emit(1.0)
             self.succeeded.emit(str(self.target_path))
-        elif worker.cancel_event.is_set() and not worker.error:
-            self.cancelled.emit()
-        elif worker.cancel_event.is_set() and "임시 파일 정리 실패" not in worker.error:
+        elif worker.cancel_event.is_set() and not worker.cleanup_failed:
             self.cancelled.emit()
         else:
-            self.failed.emit(worker.error or "내보내기가 실패했습니다.")
+            self.failed.emit(worker.error or tr("내보내기가 실패했습니다."))
         self.finished.emit()
         worker.deleteLater()

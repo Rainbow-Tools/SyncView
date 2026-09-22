@@ -4,6 +4,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from videos_multi_view.i18n import tr
+
 
 def resource_root() -> Path:
     if getattr(sys, "frozen", False):
@@ -20,7 +22,9 @@ def executable(name: str) -> str:
         found = shutil.which(name)
         if found:
             return found
-    raise FileNotFoundError(f"{name} 실행 파일이 없습니다. vendor/ffmpeg를 확인하세요.")
+    raise FileNotFoundError(
+        tr("{value0} 실행 파일이 없습니다. vendor/ffmpeg를 확인하세요.", value0=name)
+    )
 
 
 def run_tool(name: str, args: list[str], timeout: int = 30) -> subprocess.CompletedProcess:

@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from math import ceil, sqrt
 
+from videos_multi_view.i18n import tr
+
 from .models import Project
 
 
@@ -47,7 +49,7 @@ def calculate_layout(project: Project) -> list[Cell]:
     height = even((output.height - 2 * margin - gap * (rows - 1)) / rows)
     inset = even(spec.border_width + 1) if spec.border_visible else 0
     if min(width, height) < 4 + 2 * inset:
-        raise ValueError("셀 공간이 부족합니다. 열 수, 간격 또는 여백을 줄이세요.")
+        raise ValueError(tr("셀 공간이 부족합니다. 열 수, 간격 또는 여백을 줄이세요."))
     cells = []
     for index, video in enumerate(project.videos):
         x = margin + index % columns * (width + gap)

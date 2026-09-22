@@ -6,6 +6,7 @@ from pathlib import Path
 
 from videos_multi_view.core.layout import calculate_layout
 from videos_multi_view.core.models import Label, Layout, Output, Project, Video
+from videos_multi_view.i18n import tr
 
 
 def save_project(project: Project, path: Path) -> None:
@@ -13,7 +14,7 @@ def save_project(project: Project, path: Path) -> None:
     calculate_layout(project)
     path = path.resolve()
     if any(Path(v.path).resolve() == path for v in project.videos):
-        raise ValueError("원본 영상을 프로젝트 파일로 덮어쓸 수 없습니다.")
+        raise ValueError(tr("원본 영상을 프로젝트 파일로 덮어쓸 수 없습니다."))
     data = asdict(project)
     for item in data["videos"]:
         try:
@@ -39,7 +40,7 @@ def load_project(path: Path) -> Project:
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
         if data.get("version") != 1:
-            raise ValueError("지원하지 않는 프로젝트 버전입니다.")
+            raise ValueError(tr("지원하지 않는 프로젝트 버전입니다."))
         videos = []
         for item in data["videos"]:
             item = dict(item)
@@ -58,4 +59,4 @@ def load_project(path: Path) -> Project:
         calculate_layout(project)
         return project
     except (KeyError, TypeError, AttributeError, OverflowError) as exc:
-        raise ValueError("프로젝트 파일의 구조가 올바르지 않습니다.") from exc
+        raise ValueError(tr("프로젝트 파일의 구조가 올바르지 않습니다.")) from exc

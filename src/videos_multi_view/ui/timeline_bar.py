@@ -14,6 +14,8 @@ from PySide6.QtWidgets import (
 
 from videos_multi_view.core.models import Project
 from videos_multi_view.core.timeline import duration_ms, format_time
+from videos_multi_view.i18n import tr
+from videos_multi_view.ui.translation import bind
 
 
 class TimelineBar(QWidget):
@@ -37,12 +39,12 @@ class TimelineBar(QWidget):
         layout.setSpacing(8)
 
         # Play/Pause and Stop buttons
-        self.btn_play = QPushButton("▶ 재생")
+        self.btn_play = bind(QPushButton(), "▶ 재생")
         self.btn_play.setMinimumWidth(80)
         self.btn_play.clicked.connect(self.play_pause_requested.emit)
         layout.addWidget(self.btn_play)
 
-        self.btn_stop = QPushButton("⏹ 정지")
+        self.btn_stop = bind(QPushButton(), "⏹ 정지")
         self.btn_stop.clicked.connect(self.stop_requested.emit)
         layout.addWidget(self.btn_stop)
 
@@ -60,7 +62,7 @@ class TimelineBar(QWidget):
         layout.addWidget(self.lbl_time)
 
         # Audio source selection
-        layout.addWidget(QLabel("오디오:"))
+        layout.addWidget(bind(QLabel(), "오디오:"))
         self.combo_audio = QComboBox()
         self.combo_audio.setMinimumWidth(150)
         self.combo_audio.currentIndexChanged.connect(self._on_audio_changed)
@@ -81,7 +83,7 @@ class TimelineBar(QWidget):
         self._update_time_label()
 
     def set_playback_state(self, is_playing: bool) -> None:
-        self.btn_play.setText("⏸ 일시정지" if is_playing else "▶ 재생")
+        bind(self.btn_play, "⏸ 일시정지" if is_playing else "▶ 재생", setter="setText")
 
     def _update_time_label(self) -> None:
         curr = format_time(self._current_time_ms)
@@ -93,12 +95,12 @@ class TimelineBar(QWidget):
         self.combo_audio.clear()
 
         # Default item: None (Mute)
-        self.combo_audio.addItem("무음 (기본)", None)
+        self.combo_audio.addItem(tr("무음 (기본)"), None)
 
         selected_index = 0
         for idx, video in enumerate(self._project.videos):
             name = video.label.text or Path(video.path).stem
-            tag = "" if video.has_audio else " (오디오 없음)"
+            tag = "" if video.has_audio else tr(" (오디오 없음)")
             label = f"{idx + 1}. {name}{tag}"
             self.combo_audio.addItem(label, video.id)
             if video.id == self._project.audio_id:
@@ -106,6 +108,9 @@ class TimelineBar(QWidget):
 
         self.combo_audio.setCurrentIndex(selected_index)
         self._blocking_audio = False
+
+    def retranslate(self) -> None:
+        self._populate_audio_sources()
 
     def _on_audio_changed(self, index: int) -> None:
         if self._blocking_audio:

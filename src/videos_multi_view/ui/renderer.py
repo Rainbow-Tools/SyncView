@@ -8,6 +8,7 @@ from PySide6.QtGui import QColor, QFont, QFontMetricsF, QImage, QPainter, QPaint
 from videos_multi_view.core.layout import Cell
 from videos_multi_view.core.models import Project, Video
 from videos_multi_view.core.timeline import format_time, source_time_ms
+from videos_multi_view.i18n import tr
 
 
 def resolve_label_text(text: str, video: Video, current_time_ms: int = 0) -> str:
@@ -125,7 +126,7 @@ class DecorationRenderer:
             self.project.output.width, self.project.output.height, QImage.Format.Format_RGBA8888
         )
         if image.isNull():
-            raise ValueError("출력 이미지를 만들 메모리가 부족합니다.")
+            raise ValueError(tr("출력 이미지를 만들 메모리가 부족합니다."))
         image.fill(Qt.GlobalColor.transparent)
         painter = QPainter(image)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)

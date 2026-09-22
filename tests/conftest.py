@@ -1,9 +1,23 @@
 from pathlib import Path
 
 import pytest
+from PySide6.QtCore import QSettings
 from PySide6.QtGui import QFontDatabase
 
 from videos_multi_view.media.tools import executable, run_tool
+
+
+@pytest.fixture(autouse=True)
+def isolated_language_settings(tmp_path, monkeypatch):
+    from videos_multi_view.application import language as preferences
+    from videos_multi_view.i18n import set_language
+
+    settings = QSettings(str(tmp_path / "preferences.ini"), QSettings.Format.IniFormat)
+    settings.setValue("ui/language", "ko")
+    monkeypatch.setattr(preferences, "QSettings", lambda *args: settings)
+    set_language("ko")
+    yield
+    set_language("ko")
 
 
 def pytest_addoption(parser):

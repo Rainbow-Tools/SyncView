@@ -1,6 +1,6 @@
 # README screenshot
 
-`syncview-preview.png` is a capture of the actual SyncView application running
+`syncview-preview.png` (Korean) and `syncview-preview-en.png` (English) capture the actual SyncView application running
 four locally generated synthetic motion clips. The clips use simple shapes,
 grids, and colors; no personal videos or third-party footage were used.
 

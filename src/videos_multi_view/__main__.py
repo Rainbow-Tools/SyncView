@@ -9,6 +9,7 @@ from pathlib import Path
 from PySide6.QtGui import QFont, QFontInfo, QIcon
 from PySide6.QtWidgets import QApplication
 
+from videos_multi_view.application.language import LanguageManager
 from videos_multi_view.ui.main_window import MainWindow
 from videos_multi_view.ui.theme import apply_theme
 
@@ -16,8 +17,9 @@ from videos_multi_view.ui.theme import apply_theme
 def main() -> None:
     parser = argparse.ArgumentParser(description="SyncView")
     parser.add_argument(
-        "--software-decode", action="store_true", help="미리보기에 소프트웨어 디코더 사용"
+        "--software-decode", action="store_true", help="Use software decoding for previews"
     )
+    parser.add_argument("--language", choices=("ko", "en"), help="UI language for this launch")
     parser.add_argument("--verify-project", type=Path, help=argparse.SUPPRESS)
     parser.add_argument("--verify-output", type=Path, help=argparse.SUPPRESS)
     args = parser.parse_args()
@@ -26,6 +28,9 @@ def main() -> None:
     app = QApplication(sys.argv)
     app.setApplicationName("SyncView")
     app.setOrganizationName("SyncView")
+    languages = LanguageManager(app)
+    if args.language:
+        languages.select(args.language, persist=False)
 
     font = QFont("Pretendard", 9)
     if "Pretendard" not in QFontInfo(font).family():
@@ -38,7 +43,7 @@ def main() -> None:
 
     apply_theme(app)
 
-    window = MainWindow()
+    window = MainWindow(language_manager=languages)
     if args.verify_project:
         from videos_multi_view.application.diagnostics import verify_application
 

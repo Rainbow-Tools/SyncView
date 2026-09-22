@@ -58,9 +58,16 @@ def verify_application(
         window.controller.shutdown()
 
     def export() -> None:
-        window.player.pause()
+        if finished:
+            return
         report["frame_count"] = len(window.player._frames)
         report["video_count"] = len(window.controller.project.videos)
+        if report["frame_count"] != report["video_count"]:
+            # A cold bundle/decoder start can exceed the initial 1.5 seconds.
+            # Keep decoding until frames arrive; the overall timer still bounds the check.
+            QTimer.singleShot(100, export)
+            return
+        window.player.pause()
         report["ffmpeg"] = executable("ffmpeg")
         report["ffprobe"] = executable("ffprobe")
         if report["frozen"]:
@@ -68,9 +75,6 @@ def verify_application(
             if not all(Path(report[name]).is_relative_to(bundle) for name in ("ffmpeg", "ffprobe")):
                 finish("Media executables are not bundled.")
                 return
-        if report["frame_count"] != report["video_count"]:
-            finish("Not all preview frames loaded.")
-            return
         window.grab().save(str(destination / "preview.png"))
         window.controller.start_export(destination / "composite.mp4")
 

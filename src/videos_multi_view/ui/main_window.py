@@ -2,8 +2,8 @@
 
 from pathlib import Path
 
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QAction, QCloseEvent, QIcon, QKeyEvent, QKeySequence
+from PySide6.QtCore import QSignalBlocker, Qt
+from PySide6.QtGui import QAction, QActionGroup, QCloseEvent, QIcon, QKeyEvent, QKeySequence
 from PySide6.QtWidgets import (
     QFileDialog,
     QHBoxLayout,
@@ -20,20 +20,26 @@ from PySide6.QtWidgets import (
 
 from videos_multi_view import __version__
 from videos_multi_view.application.controller import AppController
+from videos_multi_view.application.language import LanguageManager
+from videos_multi_view.i18n import LANGUAGES, tr
 from videos_multi_view.media.player import SyncPlayer
 from videos_multi_view.media.tools import resource_root
 from videos_multi_view.ui.help_dialog import HelpDialog
 from videos_multi_view.ui.preview import PreviewCanvas
 from videos_multi_view.ui.settings_panel import SettingsPanel
 from videos_multi_view.ui.timeline_bar import TimelineBar
+from videos_multi_view.ui.translation import bind, retranslate
 from videos_multi_view.ui.video_list import VideoListPanel
 
 
 class MainWindow(QMainWindow):
     """Main window coordinating UI panels, menu actions, and media playback."""
 
-    def __init__(self, parent: QWidget | None = None) -> None:
+    def __init__(
+        self, parent: QWidget | None = None, language_manager: LanguageManager | None = None
+    ) -> None:
         super().__init__(parent)
+        self.languages = language_manager or LanguageManager(self)
         self.setWindowTitle("SyncView")
         self.resize(1360, 840)
 
@@ -57,6 +63,7 @@ class MainWindow(QMainWindow):
         self._setup_ui()
         self._setup_menu()
         self._connect_signals()
+        self.languages.changed.connect(self._on_language_changed)
 
         # Initialize with empty project
         self.controller.new_project()
@@ -81,33 +88,33 @@ class MainWindow(QMainWindow):
         header_layout.setContentsMargins(4, 2, 4, 2)
         header_layout.setSpacing(6)
 
-        self.btn_toggle_left = QPushButton("◧ 영상 목록")
+        self.btn_toggle_left = bind(QPushButton(), "◧ 영상 목록")
         self.btn_toggle_left.setObjectName("toggleButton")
         self.btn_toggle_left.setCheckable(True)
         self.btn_toggle_left.setChecked(True)
-        self.btn_toggle_left.setToolTip("영상 목록 패널 접기 / 펼치기 (Ctrl+1)")
+        bind(self.btn_toggle_left, "영상 목록 패널 접기 / 펼치기 (Ctrl+1)", setter="setToolTip")
         self.btn_toggle_left.toggled.connect(self._on_toggle_left_panel)
         header_layout.addWidget(self.btn_toggle_left)
 
-        self.lbl_view_status = QLabel("멀티뷰 그리드 (0개 영상)")
+        self.lbl_view_status = bind(QLabel(), "멀티뷰 그리드 (0개 영상)")
         self.lbl_view_status.setObjectName("viewStatusLabel")
         header_layout.addWidget(self.lbl_view_status)
 
         header_layout.addStretch()
 
-        self.btn_toggle_maximize = QPushButton("⛶ 최대화")
+        self.btn_toggle_maximize = bind(QPushButton(), "⛶ 최대화")
         self.btn_toggle_maximize.setObjectName("toggleButton")
         self.btn_toggle_maximize.setCheckable(True)
         self.btn_toggle_maximize.setChecked(False)
-        self.btn_toggle_maximize.setToolTip("미리보기 전체화면 모드 (F11)")
+        bind(self.btn_toggle_maximize, "미리보기 전체화면 모드 (F11)", setter="setToolTip")
         self.btn_toggle_maximize.toggled.connect(self._on_toggle_maximize)
         header_layout.addWidget(self.btn_toggle_maximize)
 
-        self.btn_toggle_right = QPushButton("설정 ◨")
+        self.btn_toggle_right = bind(QPushButton(), "설정 ◨")
         self.btn_toggle_right.setObjectName("toggleButton")
         self.btn_toggle_right.setCheckable(True)
         self.btn_toggle_right.setChecked(True)
-        self.btn_toggle_right.setToolTip("설정 패널 접기 / 펼치기 (Ctrl+2)")
+        bind(self.btn_toggle_right, "설정 패널 접기 / 펼치기 (Ctrl+2)", setter="setToolTip")
         self.btn_toggle_right.toggled.connect(self._on_toggle_right_panel)
         header_layout.addWidget(self.btn_toggle_right)
 
@@ -131,7 +138,7 @@ class MainWindow(QMainWindow):
 
         self.status_bar = QStatusBar()
         self.setStatusBar(self.status_bar)
-        self.status_bar.showMessage("준비")
+        bind(self.status_bar, "준비", setter="showMessage")
 
         # Permanent progress bar for background tasks (probe, export)
         self.status_progress = QProgressBar()
@@ -143,45 +150,45 @@ class MainWindow(QMainWindow):
         menubar = self.menuBar()
 
         # File menu
-        file_menu = menubar.addMenu("파일(&F)")
+        file_menu = bind(menubar.addMenu(""), "파일(&F)", setter="setTitle")
 
-        act_new = QAction("새 프로젝트(&N)", self)
+        act_new = bind(QAction(self), "새 프로젝트(&N)")
         act_new.setShortcut(QKeySequence.StandardKey.New)
         act_new.triggered.connect(self._on_new_project)
         file_menu.addAction(act_new)
 
-        act_open = QAction("열기(&O)...", self)
+        act_open = bind(QAction(self), "열기(&O)...")
         act_open.setShortcut(QKeySequence.StandardKey.Open)
         act_open.triggered.connect(self._on_open_project)
         file_menu.addAction(act_open)
 
-        act_save = QAction("저장(&S)", self)
+        act_save = bind(QAction(self), "저장(&S)")
         act_save.setShortcut(QKeySequence.StandardKey.Save)
         act_save.triggered.connect(self._on_save_project)
         file_menu.addAction(act_save)
 
-        act_save_as = QAction("다른 이름으로 저장(&A)...", self)
+        act_save_as = bind(QAction(self), "다른 이름으로 저장(&A)...")
         act_save_as.setShortcut(QKeySequence.StandardKey.SaveAs)
         act_save_as.triggered.connect(self._on_save_project_as)
         file_menu.addAction(act_save_as)
 
         file_menu.addSeparator()
 
-        act_exit = QAction("종료(&X)", self)
+        act_exit = bind(QAction(self), "종료(&X)")
         act_exit.setShortcut(QKeySequence.StandardKey.Quit)
         act_exit.triggered.connect(self.close)
         file_menu.addAction(act_exit)
 
         # View menu
-        view_menu = menubar.addMenu("보기(&V)")
+        view_menu = bind(menubar.addMenu(""), "보기(&V)", setter="setTitle")
 
-        self.act_view_left = QAction("영상 목록 패널(&L)", self, checkable=True)
+        self.act_view_left = bind(QAction(self, checkable=True), "영상 목록 패널(&L)")
         self.act_view_left.setChecked(True)
         self.act_view_left.setShortcut(QKeySequence("Ctrl+1"))
         self.act_view_left.toggled.connect(self.btn_toggle_left.setChecked)
         view_menu.addAction(self.act_view_left)
 
-        self.act_view_right = QAction("설정 패널(&S)", self, checkable=True)
+        self.act_view_right = bind(QAction(self, checkable=True), "설정 패널(&S)")
         self.act_view_right.setChecked(True)
         self.act_view_right.setShortcut(QKeySequence("Ctrl+2"))
         self.act_view_right.toggled.connect(self.btn_toggle_right.setChecked)
@@ -189,43 +196,69 @@ class MainWindow(QMainWindow):
 
         view_menu.addSeparator()
 
-        self.act_view_max = QAction("전체화면 미리보기(&F)", self, checkable=True)
+        self.act_view_max = bind(QAction(self, checkable=True), "전체화면 미리보기(&F)")
         self.act_view_max.setChecked(False)
         self.act_view_max.setShortcut(QKeySequence("F11"))
         self.act_view_max.toggled.connect(self.btn_toggle_maximize.setChecked)
         view_menu.addAction(self.act_view_max)
 
-        # Help menu
-        help_menu = menubar.addMenu("도움말(&H)")
+        # Keep both language names visible so this menu is always discoverable.
+        language_menu = menubar.addMenu("Language / 언어")
+        language_group = QActionGroup(self)
+        language_group.setExclusive(True)
+        self.language_actions: dict[str, QAction] = {}
+        for code, name in LANGUAGES.items():
+            action = language_menu.addAction(name)
+            action.setCheckable(True)
+            action.setChecked(code == self.languages.current)
+            language_group.addAction(action)
+            action.triggered.connect(lambda checked, code=code: self.languages.select(code))
+            self.language_actions[code] = action
 
-        act_help = QAction("사용 설명서(&H)...", self)
+        # Help menu
+        help_menu = bind(menubar.addMenu(""), "도움말(&H)", setter="setTitle")
+
+        act_help = bind(QAction(self), "사용 설명서(&H)...")
         act_help.setShortcut(QKeySequence(Qt.Key.Key_F1))
         act_help.triggered.connect(lambda: self._on_show_help(0))
         help_menu.addAction(act_help)
 
-        act_shortcuts = QAction("키보드 단축키 안내(&K)...", self)
+        act_shortcuts = bind(QAction(self), "키보드 단축키 안내(&K)...")
         act_shortcuts.triggered.connect(lambda: self._on_show_help(6))
         help_menu.addAction(act_shortcuts)
 
-        act_licenses = QAction("오픈소스 라이선스 고지(&L)...", self)
+        act_licenses = bind(QAction(self), "오픈소스 라이선스 고지(&L)...")
         act_licenses.triggered.connect(lambda: self._on_show_help(7))
         help_menu.addAction(act_licenses)
 
         help_menu.addSeparator()
 
-        act_about = QAction("SyncView 정보(&A)...", self)
+        act_about = bind(QAction(self), "SyncView 정보(&A)...")
         act_about.triggered.connect(self._on_about)
         help_menu.addAction(act_about)
 
+    def _on_language_changed(self, code: str) -> None:
+        retranslate(self)
+        self.video_list_panel.retranslate()
+        self.settings_panel.retranslate()
+        self.timeline_bar.retranslate()
+        self.preview_canvas.update()
+        self._update_window_title(self.controller.is_dirty)
+        for key, action in self.language_actions.items():
+            with QSignalBlocker(action):
+                action.setChecked(key == code)
+        for dialog in self.findChildren(HelpDialog):
+            dialog.retranslate()
+
     def _on_toggle_left_panel(self, checked: bool) -> None:
         self.video_list_panel.setVisible(checked)
-        self.btn_toggle_left.setText("◧ 영상 목록" if checked else "▢ 영상 목록")
+        bind(self.btn_toggle_left, "◧ 영상 목록" if checked else "▢ 영상 목록", setter="setText")
         if self.act_view_left.isChecked() != checked:
             self.act_view_left.setChecked(checked)
 
     def _on_toggle_right_panel(self, checked: bool) -> None:
         self.settings_panel.setVisible(checked)
-        self.btn_toggle_right.setText("설정 ◨" if checked else "설정 ▢")
+        bind(self.btn_toggle_right, "설정 ◨" if checked else "설정 ▢", setter="setText")
         if self.act_view_right.isChecked() != checked:
             self.act_view_right.setChecked(checked)
 
@@ -235,11 +268,11 @@ class MainWindow(QMainWindow):
             self._saved_right_vis = self.settings_panel.isVisible()
             self.btn_toggle_left.setChecked(False)
             self.btn_toggle_right.setChecked(False)
-            self.btn_toggle_maximize.setText("⛶ 축소")
+            bind(self.btn_toggle_maximize, "⛶ 축소", setter="setText")
         else:
             self.btn_toggle_left.setChecked(getattr(self, "_saved_left_vis", True))
             self.btn_toggle_right.setChecked(getattr(self, "_saved_right_vis", True))
-            self.btn_toggle_maximize.setText("⛶ 최대화")
+            bind(self.btn_toggle_maximize, "⛶ 최대화", setter="setText")
         if self.act_view_max.isChecked() != checked:
             self.act_view_max.setChecked(checked)
 
@@ -288,7 +321,7 @@ class MainWindow(QMainWindow):
         name = (
             self.controller.current_project_path.name
             if self.controller.current_project_path
-            else "새 프로젝트"
+            else tr("새 프로젝트")
         )
         prefix = "* " if is_dirty else ""
         self.setWindowTitle(f"{prefix}{name} - SyncView")
@@ -298,7 +331,13 @@ class MainWindow(QMainWindow):
             self.status_progress.setVisible(True)
             self.status_progress.setRange(0, total)
             self.status_progress.setValue(completed)
-            self.status_bar.showMessage(f"영상 분석 중... ({completed}/{total})")
+            bind(
+                self.status_bar,
+                "영상 분석 중... ({value0}/{value1})",
+                setter="showMessage",
+                value0=completed,
+                value1=total,
+            )
         else:
             self.status_progress.setVisible(False)
 
@@ -308,7 +347,7 @@ class MainWindow(QMainWindow):
         self.status_progress.setVisible(True)
         self.status_progress.setRange(0, 100)
         self.status_progress.setValue(pct)
-        self.status_bar.showMessage(f"내보내는 중... {pct}%")
+        bind(self.status_bar, "내보내는 중... {value0}%", setter="showMessage", value0=pct)
 
     def _on_project_changed(self, project) -> None:
         sel_id = self.controller.selected_video_id
@@ -325,10 +364,20 @@ class MainWindow(QMainWindow):
         project = self.controller.project
         if solo_id:
             video = next((v for v in project.videos if v.id == solo_id), None)
-            name = Path(video.path).name if video else "영상"
-            self.lbl_view_status.setText(f"솔로 뷰: {name} (더블클릭하여 복귀)")
+            name = Path(video.path).name if video else tr("영상")
+            bind(
+                self.lbl_view_status,
+                "솔로 뷰: {value0} (더블클릭하여 복귀)",
+                setter="setText",
+                value0=name,
+            )
         else:
-            self.lbl_view_status.setText(f"멀티뷰 그리드 ({len(project.videos)}개 영상)")
+            bind(
+                self.lbl_view_status,
+                "멀티뷰 그리드 ({value0}개 영상)",
+                setter="setText",
+                value0=len(project.videos),
+            )
 
     def _on_video_selected(self, video_id: str | None) -> None:
         self.preview_canvas.set_selected_video(video_id)
@@ -339,8 +388,10 @@ class MainWindow(QMainWindow):
         if target_path.exists():
             res = QMessageBox.question(
                 self,
-                "파일 덮어쓰기 확인",
-                f"'{target_path.name}' 파일이 이미 존재합니다.\n덮어쓰시겠습니까?",
+                tr("파일 덮어쓰기 확인"),
+                tr(
+                    "'{value0}' 파일이 이미 존재합니다.\n덮어쓰시겠습니까?", value0=target_path.name
+                ),
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             )
             if res != QMessageBox.StandardButton.Yes:
@@ -349,43 +400,48 @@ class MainWindow(QMainWindow):
         self.settings_panel.set_exporting_state(True)
         self.status_progress.setVisible(True)
         self.status_progress.setValue(0)
-        self.status_bar.showMessage(f"내보내는 중: {target_path.name}")
+        bind(
+            self.status_bar, "내보내는 중: {value0}", setter="showMessage", value0=target_path.name
+        )
         self.controller.start_export(target_path, fps)
 
     def _on_export_succeeded(self, output_path: str) -> None:
         self.settings_panel.set_exporting_state(False)
         self.settings_panel.set_export_status("완료", is_error=False)
         self.status_progress.setVisible(False)
-        self.status_bar.showMessage(f"완료: {output_path}")
-        QMessageBox.information(self, "완료", f"내보내기 완료:\n{output_path}")
+        bind(self.status_bar, "완료: {value0}", setter="showMessage", value0=output_path)
+        QMessageBox.information(
+            self, tr("완료"), tr("내보내기 완료:\n{value0}", value0=output_path)
+        )
 
     def _on_export_failed(self, error_msg: str) -> None:
         self.settings_panel.set_exporting_state(False)
-        self.settings_panel.set_export_status(f"실패: {error_msg}", is_error=True)
+        self.settings_panel.set_export_status("실패: {value0}", is_error=True, value0=error_msg)
         self.status_progress.setVisible(False)
-        self.status_bar.showMessage("내보내기 실패")
-        QMessageBox.critical(self, "오류", f"내보내기 실패:\n{error_msg}")
+        bind(self.status_bar, "내보내기 실패", setter="showMessage")
+        QMessageBox.critical(self, tr("오류"), tr("내보내기 실패:\n{value0}", value0=error_msg))
 
     def _on_export_cancelled(self) -> None:
         self.settings_panel.set_exporting_state(False)
         self.settings_panel.set_export_status("취소됨", is_error=False)
         self.status_progress.setVisible(False)
-        self.status_bar.showMessage("내보내기 취소됨")
+        bind(self.status_bar, "내보내기 취소됨", setter="showMessage")
 
     def _on_new_project(self) -> None:
         if not self._check_discard_changes():
             return
         self.controller.new_project()
-        self.status_bar.showMessage("새 프로젝트")
+        bind(self.status_bar, "새 프로젝트", setter="showMessage")
 
     def _on_open_project(self) -> None:
         if not self._check_discard_changes():
             return
         path, _ = QFileDialog.getOpenFileName(
             self,
-            "프로젝트 열기",
+            tr("프로젝트 열기"),
             "",
-            "SyncView 프로젝트 (*.json);;모든 파일 (*.*)",
+            tr("SyncView 프로젝트 (*.json);;모든 파일 (*.*)"),
+            options=QFileDialog.Option.DontUseNativeDialog,
         )
         if not path:
             return
@@ -395,21 +451,26 @@ class MainWindow(QMainWindow):
                 missing_str = "\n".join(f"- {p}" for p in missing)
                 QMessageBox.warning(
                     self,
-                    "영상 파일 누락",
-                    f"다음 원본 파일이 없습니다:\n{missing_str}",
+                    tr("영상 파일 누락"),
+                    tr("다음 원본 파일이 없습니다:\n{value0}", value0=missing_str),
                 )
-            self.status_bar.showMessage(f"로드됨: {Path(path).name}")
+            bind(self.status_bar, "로드됨: {value0}", setter="showMessage", value0=Path(path).name)
         except Exception as exc:
-            QMessageBox.critical(self, "오류", str(exc))
+            QMessageBox.critical(self, tr("오류"), str(exc))
 
     def _on_save_project(self) -> bool:
         if self.controller.current_project_path:
             try:
                 self.controller.save_project_file(self.controller.current_project_path)
-                self.status_bar.showMessage(f"저장됨: {self.controller.current_project_path.name}")
+                bind(
+                    self.status_bar,
+                    "저장됨: {value0}",
+                    setter="showMessage",
+                    value0=self.controller.current_project_path.name,
+                )
                 return True
             except Exception as exc:
-                QMessageBox.critical(self, "오류", str(exc))
+                QMessageBox.critical(self, tr("오류"), str(exc))
                 return False
         else:
             return self._on_save_project_as()
@@ -417,17 +478,23 @@ class MainWindow(QMainWindow):
     def _on_save_project_as(self) -> bool:
         path, _ = QFileDialog.getSaveFileName(
             self,
-            "프로젝트 저장",
+            tr("프로젝트 저장"),
             "project.json",
-            "SyncView 프로젝트 (*.json)",
+            tr("SyncView 프로젝트 (*.json)"),
+            options=QFileDialog.Option.DontUseNativeDialog,
         )
         if path:
             try:
                 self.controller.save_project_file(Path(path))
-                self.status_bar.showMessage(f"저장됨: {Path(path).name}")
+                bind(
+                    self.status_bar,
+                    "저장됨: {value0}",
+                    setter="showMessage",
+                    value0=Path(path).name,
+                )
                 return True
             except Exception as exc:
-                QMessageBox.critical(self, "오류", str(exc))
+                QMessageBox.critical(self, tr("오류"), str(exc))
                 return False
         return False
 
@@ -438,18 +505,17 @@ class MainWindow(QMainWindow):
     def _on_about(self) -> None:
         QMessageBox.about(
             self,
-            "SyncView 정보",
+            tr("SyncView 정보"),
             f"<h3>SyncView v{__version__}</h3>"
-            "<p>로컬 동영상 멀티뷰 동기 재생 및 MP4 합성 도구</p>"
-            "<p>단축키: <code>F1</code> 키를 눌러 상세 설명서를 확인하세요.</p>"
-            "<hr style='border: none; border-top: 1px solid #1E293B;'>"
-            "<p><b>오픈소스 라이선스 안내:</b><br>"
-            "SyncView 자체 코드: <b>MIT</b>.<br>"
-            "외부 구성요소: <b>FFmpeg CLI (GPLv3-or-later)</b>, "
-            "<b>Qt의 FFmpeg (LGPLv2.1-or-later)</b>, "
-            "<b>PySide6/Qt (LGPLv3)</b>, <b>Python (PSF)</b> 등.<br>"
-            "자세한 고지는 <b>[도움말] &gt; [오픈소스 라이선스 고지]</b>에서 "
-            "확인하실 수 있습니다.</p>",
+            + "<p>"
+            + tr("로컬 동영상 멀티뷰 동기 재생 및 MP4 합성 도구")
+            + "</p>"
+            + "<p>"
+            + tr("F1 키로 사용 설명서를 열 수 있습니다.")
+            + "</p>"
+            + "<p>"
+            + tr("자체 코드: MIT. 외부 구성요소의 조건은 도움말의 라이선스 고지를 확인하세요.")
+            + "</p>",
         )
 
     def _on_sync_marker(self) -> None:
@@ -461,15 +527,21 @@ class MainWindow(QMainWindow):
             video.offset_ms = self.player.common_time
             self.controller.update_video_settings(video.id)
             name = video.label.text or Path(video.path).stem
-            self.status_bar.showMessage(f"씽크 설정: {name} (오프셋: {video.offset_ms}ms)")
+            bind(
+                self.status_bar,
+                "씽크 설정: {value0} (오프셋: {value1}ms)",
+                setter="showMessage",
+                value0=name,
+                value1=video.offset_ms,
+            )
 
     def _check_discard_changes(self) -> bool:
         if not self.controller.is_dirty:
             return True
         res = QMessageBox.question(
             self,
-            "저장되지 않은 변경사항",
-            "현재 프로젝트에 저장되지 않은 변경사항이 있습니다.\n저장하시겠습니까?",
+            tr("저장되지 않은 변경사항"),
+            tr("현재 프로젝트에 저장되지 않은 변경사항이 있습니다.\n저장하시겠습니까?"),
             QMessageBox.StandardButton.Save
             | QMessageBox.StandardButton.Discard
             | QMessageBox.StandardButton.Cancel,

@@ -101,6 +101,16 @@ python scripts/benchmark_playback.py --counts 9 --output artifacts/playback-auto
 
 이 실행 검증은 EXE 재배포 조건을 모두 충족했다는 뜻이 아니다. 대응 소스·전체 구성요소 고지·Qt 재결합 절차의 남은 준비는 [라이선스 검토](LICENSING.md)를 따른다.
 
+## 한국어·영어 UI 및 포터블 검증 (2026-09-22)
+
+- 전체 테스트: **92 passed, 1 skipped**. 기존 82개에 언어 선택·저장·시스템 언어 fallback·전환 중 상태 보존·도움말·Qt 기본 버튼·오류·번역 카탈로그·export 취소 판정 검증을 추가했다. Ruff 검사와 포맷 검사도 통과했다.
+- 한국어·영어 실제 UI를 합성 영상 네 개로 확인했다. 언어를 바꿔도 원본 이름표·매크로·위치 enum·오디오·인코더·프로젝트 변경 여부·재생 상태가 유지된다. 영어 설정 패널은 좁은 폭에서 긴 행을 줄바꿈한다.
+- `scripts/build_portable.ps1`로 ZIP을 생성했다. 앱 소스 스냅샷, 외부 고지와 주요 라이선스, `qtbase_ko.qm`, 빠른 시작 안내, 소프트웨어 디코딩 실행 파일을 포함한다. 최종 ZIP에서 Virtual Keyboard 제외와 231개 파일 해시를 확인했다. ZIP 체크섬은 `dist/SyncView-windows-x64-portable.zip.sha256`에 기록한다.
+- ZIP을 한글·공백 경로에 압축 해제하고 PATH를 Windows 시스템 경로로 제한했다. `PYTHONHOME`, `PYTHONPATH`, `VIRTUAL_ENV`를 제거한 뒤 영어·한국어 각각 `--software-decode`로 영상 4개 프레임과 H.264·1280×720·30fps·약 5.266초 MP4 출력을 확인했다. 같은 PC에서의 offscreen 검사이며 새 Windows VM 검증은 아니다.
+- 단일 EXE의 첫 검증에서 1.5초 안에 프레임이 준비되지 않아 실패했으나 같은 실행 파일의 재시도는 성공했다. 검증 모드를 고정 대기 후 실패하는 방식에서 모든 프레임 준비 후 export하는 방식으로 수정했다. 전체 120초 제한은 유지한다.
+- 수정 후 최종 단일 EXE도 별도 폴더와 제한된 PATH에서 영어 UI·영상 4개 미리보기·MP4 출력에 성공했다. 크기는 133,253,398바이트, SHA256은 `ab9927b221e6d5aaa517c0351ec97296b74ef456b0a1ae5aeed2886ba5f7c07c`다.
+- Qt 번역 파일은 [Qt Translations 6.11.2의 파일별 규칙](https://github.com/qt/qttranslations/blob/v6.11.2/licenseRule.json)에 따라 LGPLv3 경로로 취급한다. 공개 바이너리 배포를 위한 전체 대응 소스·고지 준비는 여전히 별도 작업이다.
+
 ## 남은 범위
 
 - NVIDIA/Intel 하드웨어 인코더의 실제 장비별 성공 여부와 속도는 별도 검증 대상이다. 이번 실제 export 검증은 CPU libx264를 사용했다.

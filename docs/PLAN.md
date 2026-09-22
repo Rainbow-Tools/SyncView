@@ -32,7 +32,7 @@ Python은 상태와 작업을 조정하고, 실제 영상 디코딩·인코딩�
 
 ### 첫 버전 범위
 
-Windows x64, 로컬 파일, 한국어 UI를 기본으로 한다. PNG export, 자유 배치 편집, 다중 오디오 혼합, 프레임 단위 분석, 자동 업데이트는 후속 범위다. 영상 개수는 가변적으로 처리하되 첫 버전의 성능 검증 범위는 2~9개로 한다. 임의의 해상도와 개수에서 실시간 성능을 보장한다는 의미는 아니다.
+Windows x64와 로컬 파일을 지원한다. UI는 한국어·영어를 선택하며 첫 실행은 시스템의 UI 언어를 따른다(그 외 언어는 영어). PNG export, 자유 배치 편집, 다중 오디오 혼합, 프레임 단위 분석, 자동 업데이트는 후속 범위다. 영상 개수는 가변적으로 처리하되 첫 버전의 성능 검증 범위는 2~9개로 한다. 임의의 해상도와 개수에서 실시간 성능을 보장한다는 의미는 아니다.
 
 ## 2. 사용자 기능과 기본 동작
 
@@ -169,9 +169,17 @@ python -m PyInstaller VideoMultiView.spec
 
 ### 단일 EXE 빌드
 
+단일 EXE 명령은 유지하며, `scripts/build_portable.ps1`로 폴더형 번들과 ZIP도 생성한다. 최종 사용자는 ZIP 전체를 압축 해제하고 EXE를 실행한다. Python·FFmpeg 설치는 빌드 담당자의 개발 환경에서만 필요하다. 포터블 ZIP의 외부 공개에는 [라이선스 자료 준비](LICENSING.md)가 별도로 필요하다.
+
 Windows x64 환경에서 `VideoMultiView.spec`에 onefile·windowed 설정을 기록하고 Qt 플러그인, 재생에 필요한 라이브러리, FFmpeg·FFprobe 실행 파일을 포함한다. 최종 앱은 실행 PC의 Python이나 PATH에 의존하지 않는다.
 
 PyInstaller 단일 EXE는 실행 시 내부 리소스를 임시 경로에 해제한다. 번들 리소스 위치와 프로젝트·export 등 사용자 저장 위치를 분리하고, 사용자 파일을 번들 임시 경로에 저장하지 않는다. 패키징 검증은 폴더형 번들에서 의존성을 확인한 뒤 단일 EXE로 수행한다. [PyInstaller 문서](https://pyinstaller.org/en/stable/operating-mode.html)
+
+### 언어 전환
+
+`Language / 언어` 메뉴에서 한국어·영어를 즉시 전환한다. 설정은 `QSettings`에 저장하고 JSON 프로젝트와 분리한다. CLI `--language ko|en`은 이번 실행만 변경한다. 메뉴·설정·대화상자·도움말을 번역하며 사용자 이름표·경로·매크로·직렬화한 enum 값은 그대로 유지한다. 재생·분석·export를 재시작하지 않는다.
+
+문구 조회는 Qt와 입출력에 의존하지 않는 `i18n.py`와 `translations.py`가 맡는다. UI의 명시적 text binding만 갱신하고, 언어 저장과 시스템 UI 언어 판정은 `application/language.py`가 맡는다. Qt 기본 대화상자에는 번들에 포함한 `qtbase_ko.qm`을 사용한다. 외부 FFmpeg·운영체제 오류의 원문은 번역하지 않는다.
 
 ## 4. 구현 순서와 완료 기준
 
