@@ -187,4 +187,4 @@ def test_catalog_covers_message_calls_and_preserves_placeholders():
             value = node.args[index]
             if isinstance(value, ast.Constant) and isinstance(value.value, str):
                 assert value.value in ENGLISH, (path, value.value)
-    assert len(ENGLISH_HELP_SECTIONS) == len(HELP_SECTIONS) == 8
+    assert len(ENGLISH_HELP_SECTIONS) == len(HELP_SECTIONS) == 9

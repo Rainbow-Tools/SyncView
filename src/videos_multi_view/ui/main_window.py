@@ -102,6 +102,14 @@ class MainWindow(QMainWindow):
 
         header_layout.addStretch()
 
+        self.btn_toggle_overlay = bind(QPushButton(), "⧉ 오버레이")
+        self.btn_toggle_overlay.setObjectName("toggleButton")
+        self.btn_toggle_overlay.setCheckable(True)
+        self.btn_toggle_overlay.setChecked(False)
+        bind(self.btn_toggle_overlay, "오버레이 비교 모드 (Ctrl+3)", setter="setToolTip")
+        self.btn_toggle_overlay.toggled.connect(self._on_toggle_overlay)
+        header_layout.addWidget(self.btn_toggle_overlay)
+
         self.btn_toggle_maximize = bind(QPushButton(), "⛶ 최대화")
         self.btn_toggle_maximize.setObjectName("toggleButton")
         self.btn_toggle_maximize.setCheckable(True)
@@ -194,6 +202,12 @@ class MainWindow(QMainWindow):
         self.act_view_right.toggled.connect(self.btn_toggle_right.setChecked)
         view_menu.addAction(self.act_view_right)
 
+        self.act_view_overlay = bind(QAction(self, checkable=True), "오버레이 비교(&V)")
+        self.act_view_overlay.setChecked(False)
+        self.act_view_overlay.setShortcut(QKeySequence("Ctrl+3"))
+        self.act_view_overlay.toggled.connect(self.btn_toggle_overlay.setChecked)
+        view_menu.addAction(self.act_view_overlay)
+
         view_menu.addSeparator()
 
         self.act_view_max = bind(QAction(self, checkable=True), "전체화면 미리보기(&F)")
@@ -224,11 +238,11 @@ class MainWindow(QMainWindow):
         help_menu.addAction(act_help)
 
         act_shortcuts = bind(QAction(self), "키보드 단축키 안내(&K)...")
-        act_shortcuts.triggered.connect(lambda: self._on_show_help(6))
+        act_shortcuts.triggered.connect(lambda: self._on_show_help(7))
         help_menu.addAction(act_shortcuts)
 
         act_licenses = bind(QAction(self), "오픈소스 라이선스 고지(&L)...")
-        act_licenses.triggered.connect(lambda: self._on_show_help(7))
+        act_licenses.triggered.connect(lambda: self._on_show_help(8))
         help_menu.addAction(act_licenses)
 
         help_menu.addSeparator()
@@ -275,6 +289,12 @@ class MainWindow(QMainWindow):
             bind(self.btn_toggle_maximize, "⛶ 최대화", setter="setText")
         if self.act_view_max.isChecked() != checked:
             self.act_view_max.setChecked(checked)
+
+    def _on_toggle_overlay(self, checked: bool) -> None:
+        if self.settings_panel.chk_overlay.isChecked() != checked:
+            self.settings_panel.set_overlay_enabled(checked)
+        if self.act_view_overlay.isChecked() != checked:
+            self.act_view_overlay.setChecked(checked)
 
     def _connect_signals(self) -> None:
         # Video list panel
@@ -355,6 +375,12 @@ class MainWindow(QMainWindow):
         self.video_list_panel.set_videos(project.videos, sel_id)
         self.settings_panel.set_project(project, sel_id)
         self.timeline_bar.set_project(project)
+        is_ov = project.overlay.enabled and len(project.videos) >= 2
+        with QSignalBlocker(self.btn_toggle_overlay), QSignalBlocker(self.act_view_overlay):
+            self.btn_toggle_overlay.setChecked(is_ov)
+            self.act_view_overlay.setChecked(is_ov)
+            self.btn_toggle_overlay.setEnabled(len(project.videos) >= 2)
+            self.act_view_overlay.setEnabled(len(project.videos) >= 2)
         self._update_view_status(self.preview_canvas._solo_video_id)
 
     def _on_solo_changed(self, video_id: str | None) -> None:
@@ -362,7 +388,20 @@ class MainWindow(QMainWindow):
 
     def _update_view_status(self, solo_id: str | None = None) -> None:
         project = self.controller.project
-        if solo_id:
+        if project.overlay.enabled and len(project.videos) >= 2:
+            method_names = {
+                "blend": tr("투명도 블렌드"),
+                "tint": tr("색상 틴트"),
+                "difference": tr("잔차 오류 맵"),
+            }
+            m_text = method_names.get(project.overlay.method, project.overlay.method)
+            bind(
+                self.lbl_view_status,
+                "오버레이 비교 모드: {value0}",
+                setter="setText",
+                value0=m_text,
+            )
+        elif solo_id:
             video = next((v for v in project.videos if v.id == solo_id), None)
             name = Path(video.path).name if video else tr("영상")
             bind(

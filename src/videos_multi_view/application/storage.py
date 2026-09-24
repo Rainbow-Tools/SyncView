@@ -5,7 +5,7 @@ from dataclasses import asdict
 from pathlib import Path
 
 from videos_multi_view.core.layout import calculate_layout
-from videos_multi_view.core.models import Label, Layout, Output, Project, Video
+from videos_multi_view.core.models import Label, Layout, Output, OverlayConfig, Project, Video
 from videos_multi_view.i18n import tr
 
 
@@ -48,10 +48,13 @@ def load_project(path: Path) -> Project:
             source = Path(item["path"])
             item["path"] = str((path.parent / source).resolve())
             videos.append(Video(**item))
+        overlay_data = data.get("overlay")
+        overlay = OverlayConfig(**overlay_data) if overlay_data else OverlayConfig()
         project = Project(
             videos=videos,
             layout=Layout(**data["layout"]),
             output=Output(**data["output"]),
+            overlay=overlay,
             audio_id=data.get("audio_id"),
             version=data["version"],
         )

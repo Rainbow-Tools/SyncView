@@ -46,6 +46,22 @@ class Layout:
 
 
 VALID_ENCODERS = ("libx264", "h264_nvenc", "h264_qsv")
+OVERLAY_METHODS = ("blend", "tint", "difference")
+DIFF_COLORMAPS = ("grayscale", "heat", "jet", "green", "magenta", "custom")
+
+
+@dataclass
+class OverlayConfig:
+    enabled: bool = False
+    base_video_id: str | None = None
+    overlay_video_id: str | None = None
+    method: str = "blend"
+    opacity: float = 0.5
+    gain: float = 1.0
+    tint_a: str = "#FF0000"
+    tint_b: str = "#00FFFF"
+    diff_colormap: str = "grayscale"
+    diff_custom_color: str = "#00FF66"
 
 
 @dataclass
@@ -61,6 +77,7 @@ class Project:
     videos: list[Video] = field(default_factory=list)
     layout: Layout = field(default_factory=Layout)
     output: Output = field(default_factory=Output)
+    overlay: OverlayConfig = field(default_factory=OverlayConfig)
     audio_id: str | None = None
     version: int = 1
 
@@ -106,6 +123,19 @@ class Project:
             colors += [video.label.color, video.label.background]
         if self.audio_id is not None and self.audio_id not in ids:
             raise ValueError(tr("선택한 오디오 영상이 없습니다."))
+        if self.overlay.method not in OVERLAY_METHODS:
+            raise ValueError(tr("지원하지 않는 오버레이 비교 방식입니다."))
+        if self.overlay.diff_colormap not in DIFF_COLORMAPS:
+            raise ValueError(tr("지원하지 않는 잔차 색상입니다."))
+        if not (0.0 <= self.overlay.opacity <= 1.0):
+            raise ValueError(tr("투명도는 0.0과 1.0 사이여야 합니다."))
+        if not (1.0 <= self.overlay.gain <= 50.0):
+            raise ValueError(tr("잔차 증폭 배율은 1.0과 50.0 사이여야 합니다."))
+        colors += [self.overlay.tint_a, self.overlay.tint_b, self.overlay.diff_custom_color]
+        if self.overlay.base_video_id is not None and self.overlay.base_video_id not in ids:
+            raise ValueError(tr("선택한 기준 영상이 없습니다."))
+        if self.overlay.overlay_video_id is not None and self.overlay.overlay_video_id not in ids:
+            raise ValueError(tr("선택한 비교 영상이 없습니다."))
         for color in colors:
             if not isinstance(color, str) or not re.fullmatch(
                 r"#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?", color

@@ -223,6 +223,8 @@ class AppController(QObject):
                 candidate.layout, candidate.output = value
             elif kind == "output":
                 candidate.output = value
+            elif kind == "overlay":
+                candidate.overlay = value
             candidate.validate()
             calculate_layout(candidate)
         except (ValueError, TypeError, StopIteration) as exc:
@@ -233,6 +235,8 @@ class AppController(QObject):
             original = self.project.videos[idx]
             for field in fields(Video):
                 setattr(original, field.name, getattr(value, field.name))
+        elif kind == "overlay":
+            self.project.overlay = candidate.overlay
         else:
             self.project.layout, self.project.output = candidate.layout, candidate.output
         self._notify_state_changed()
@@ -241,6 +245,9 @@ class AppController(QObject):
         self._notify_state_changed()
 
     def update_video_settings(self, video_id: str) -> None:
+        self._notify_state_changed()
+
+    def update_overlay_settings(self) -> None:
         self._notify_state_changed()
 
     def set_audio_source(self, audio_id: str | None) -> None:

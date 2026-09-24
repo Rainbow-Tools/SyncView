@@ -92,6 +92,14 @@ class DecorationRenderer:
 
     def __init__(self, project: Project, cells: list[Cell]) -> None:
         self.project, self.cells = project, cells
+        self._is_overlay = project.overlay.enabled and len(project.videos) >= 2
+        if self._is_overlay:
+            self.labels = []
+            self.dynamic = False
+            self._border_path = QPainterPath()
+            self._border_pen = QPen()
+            return
+
         videos = {v.id: v for v in project.videos}
         self.labels = [
             _LabelCache(videos[cell.video_id], cell)
@@ -113,6 +121,10 @@ class DecorationRenderer:
 
     def draw(self, painter: QPainter, current_time_ms: int = 0) -> None:
         painter.save()
+        if self._is_overlay:
+            self._draw_overlay_badge(painter)
+            painter.restore()
+            return
         if not self._border_path.isEmpty():
             painter.setPen(self._border_pen)
             painter.setBrush(Qt.BrushStyle.NoBrush)
@@ -120,6 +132,51 @@ class DecorationRenderer:
         for label in self.labels:
             label.draw(painter, current_time_ms)
         painter.restore()
+
+    def _draw_overlay_badge(self, painter: QPainter) -> None:
+        overlay = self.project.overlay
+        video_map = {v.id: v for v in self.project.videos}
+        vid_a = video_map.get(overlay.base_video_id) or self.project.videos[0]
+        candidates = [v for v in self.project.videos if v.id != vid_a.id]
+        vid_b = (
+            video_map.get(overlay.overlay_video_id)
+            if overlay.overlay_video_id and overlay.overlay_video_id in video_map
+            else (candidates[0] if candidates else None)
+        )
+        if not vid_b:
+            return
+        badge_font = QFont("Pretendard Variable", 10)
+        badge_font.setWeight(QFont.Weight.DemiBold)
+        painter.setFont(badge_font)
+        method = overlay.method
+        method_names = {
+            "blend": f"투명도 블렌드 ({int(overlay.opacity * 100)}%)",
+            "tint": "색상 틴트 비교",
+            "difference": f"잔차 오류 맵 ({overlay.gain:.1f}x)",
+        }
+        text = f"⧉ 오버레이 비교: {method_names.get(method, method)}"
+        name_a = Path(vid_a.path).stem
+        name_b = Path(vid_b.path).stem
+        subtext = f"{name_a} vs {name_b}"
+        badge_w = max(260.0, QFontMetricsF(badge_font).horizontalAdvance(text) + 24.0)
+        badge_rect = QRectF(12, 12, badge_w, 42)
+        painter.setPen(Qt.PenStyle.NoPen)
+        painter.setBrush(QColor(0, 0, 0, 190))
+        painter.drawRoundedRect(badge_rect, 6, 6)
+        painter.setPen(QColor("#60A5FA"))
+        painter.drawText(
+            QRectF(badge_rect.x() + 10, badge_rect.y() + 4, badge_rect.width() - 20, 18),
+            Qt.AlignmentFlag.AlignLeft,
+            text,
+        )
+        small_font = QFont("Pretendard Variable", 8)
+        painter.setFont(small_font)
+        painter.setPen(QColor("#94A3B8"))
+        painter.drawText(
+            QRectF(badge_rect.x() + 10, badge_rect.y() + 23, badge_rect.width() - 20, 16),
+            Qt.AlignmentFlag.AlignLeft,
+            subtext,
+        )
 
     def image(self, current_time_ms: int = 0) -> QImage:
         image = QImage(

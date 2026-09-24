@@ -11,7 +11,7 @@ from uuid import uuid4
 
 from PySide6.QtCore import QObject, QThread, Signal
 
-from videos_multi_view.core.layout import calculate_layout
+from videos_multi_view.core.layout import Rect, calculate_layout, fit
 from videos_multi_view.core.models import Project
 from videos_multi_view.core.timeline import duration_ms, source_time_ms
 from videos_multi_view.i18n import tr
@@ -20,7 +20,6 @@ from videos_multi_view.ui.renderer import DecorationRenderer
 
 
 def build_filter_complex(project: Project) -> tuple[str, bool]:
-    cells = calculate_layout(project)
     length = duration_ms(project) / 1000
     fps = project.output.fps
     # MP4 is opaque; QColor's alpha-first notation must not be passed as FFmpeg RGBA.
@@ -29,23 +28,136 @@ def build_filter_complex(project: Project) -> tuple[str, bool]:
         f"color=c=0x{background}:s={project.output.width}x{project.output.height}"
         f":r={fps}:d={length:.6f}[base]"
     ]
-    previous = "[base]"
-    for i, (video, cell) in enumerate(zip(project.videos, cells, strict=True)):
-        start = (source_time_ms(video, 0) or 0) / 1000
-        delay = max(0, video.offset_ms) / 1000
-        rect = cell.image
-        # Normalize BEFORE trim; resample only after trimming the source interval.
-        chain = (
-            f"setpts=PTS-STARTPTS,trim=start={start:.6f}:end={video.duration_ms / 1000:.6f},"
-            f"setpts=PTS-STARTPTS,scale={rect.width}:{rect.height},setsar=1,"
-            f"tpad=stop_mode=clone:stop_duration={length:.6f},fps={fps},setpts=PTS+{delay:.6f}/TB"
+
+    if project.overlay.enabled and len(project.videos) >= 2:
+        video_map = {v.id: v for v in project.videos}
+        overlay = project.overlay
+        vid_a = video_map.get(overlay.base_video_id) or project.videos[0]
+        candidates = [v for v in project.videos if v.id != vid_a.id]
+        vid_b = (
+            video_map.get(overlay.overlay_video_id)
+            if overlay.overlay_video_id and overlay.overlay_video_id in video_map
+            else (candidates[0] if candidates else project.videos[1])
         )
-        filters.append(f"[{i}:v:0]{chain}[v{i}]")
+
+        idx_a = next(i for i, v in enumerate(project.videos) if v.id == vid_a.id)
+        idx_b = next(i for i, v in enumerate(project.videos) if v.id == vid_b.id)
+
+        bounds = Rect(0, 0, project.output.width, project.output.height)
+        rect_a = fit(vid_a.display_aspect, bounds)
+        w, h = rect_a.width, rect_a.height
+
+        for idx, vid in ((idx_a, vid_a), (idx_b, vid_b)):
+            start = (source_time_ms(vid, 0) or 0) / 1000
+            delay = max(0, vid.offset_ms) / 1000
+            chain = (
+                f"setpts=PTS-STARTPTS,trim=start={start:.6f}:end={vid.duration_ms / 1000:.6f},"
+                f"setpts=PTS-STARTPTS,scale={w}:{h},setsar=1,"
+                f"tpad=stop_mode=clone:stop_duration={length:.6f},"
+                f"fps={fps},setpts=PTS+{delay:.6f}/TB"
+            )
+            filters.append(f"[{idx}:v:0]{chain}[ov_in{idx}]")
+
+        method = overlay.method
+        if method == "blend":
+            filters.append(
+                f"[ov_in{idx_a}][ov_in{idx_b}]blend=all_mode='normal':"
+                f"all_opacity={overlay.opacity:.3f}[ov_merged]"
+            )
+        elif method == "tint":
+            c_a = overlay.tint_a.lstrip("#")
+            ra = int(c_a[0:2], 16) / 255.0
+            ga = int(c_a[2:4], 16) / 255.0
+            ba = int(c_a[4:6], 16) / 255.0
+            c_b = overlay.tint_b.lstrip("#")
+            rb = int(c_b[0:2], 16) / 255.0
+            gb = int(c_b[2:4], 16) / 255.0
+            bb = int(c_b[4:6], 16) / 255.0
+            filters.append(
+                f"[ov_in{idx_a}]colorchannelmixer=rr={ra:.3f}:rg=0:rb=0:gr=0:"
+                f"gg={ga:.3f}:gb=0:br=0:bg=0:bb={ba:.3f}[tint_a]"
+            )
+            filters.append(
+                f"[ov_in{idx_b}]colorchannelmixer=rr={rb:.3f}:rg=0:rb=0:gr=0:"
+                f"gg={gb:.3f}:gb=0:br=0:bg=0:bb={bb:.3f}[tint_b]"
+            )
+            filters.append("[tint_a][tint_b]blend=all_mode='addition'[ov_merged]")
+        elif method == "difference":
+            gain = max(1.0, float(overlay.gain))
+            colormap = overlay.diff_colormap
+            if colormap == "heat":
+                lut = (
+                    f"lutrgb=r='clip(3*clip(val*{gain:.2f},0,255)/255,0,1)*255':"
+                    f"g='clip(3*clip(val*{gain:.2f},0,255)/255-1,0,1)*255':"
+                    f"b='clip(3*clip(val*{gain:.2f},0,255)/255-2,0,1)*255'"
+                )
+            elif colormap == "jet":
+                lut = (
+                    f"lutrgb=r='clip(4*clip(val*{gain:.2f},0,255)/255-2,0,1)*255':"
+                    f"g='clip(1.5-abs(3*clip(val*{gain:.2f},0,255)/255-1.5),0,1)*255':"
+                    f"b='clip(2-4*clip(val*{gain:.2f},0,255)/255,0,1)*"
+                    f"clip(clip(val*{gain:.2f},0,255)*10/255,0,1)*255'"
+                )
+            elif colormap == "green":
+                lut = (
+                    f"lutrgb=r=0:"
+                    f"g='clip(val*{gain:.2f},0,255)':"
+                    f"b='clip(val*{gain:.2f}*102/255,0,255)'"
+                )
+            elif colormap == "magenta":
+                lut = (
+                    f"lutrgb=r='clip(val*{gain:.2f},0,255)':"
+                    f"g=0:"
+                    f"b='clip(val*{gain:.2f}*153/255,0,255)'"
+                )
+            elif colormap == "custom":
+                c = overlay.diff_custom_color.lstrip("#")
+                cr = int(c[0:2], 16) / 255.0
+                cg = int(c[2:4], 16) / 255.0
+                cb = int(c[4:6], 16) / 255.0
+                lut = (
+                    f"lutrgb=r='clip(val*{gain:.2f}*{cr:.3f},0,255)':"
+                    f"g='clip(val*{gain:.2f}*{cg:.3f},0,255)':"
+                    f"b='clip(val*{gain:.2f}*{cb:.3f},0,255)'"
+                )
+            else:
+                lut = (
+                    f"lutrgb=r='clip(val*{gain:.2f},0,255)':"
+                    f"g='clip(val*{gain:.2f},0,255)':"
+                    f"b='clip(val*{gain:.2f},0,255)'"
+                )
+            filters.append(
+                f"[ov_in{idx_a}][ov_in{idx_b}]blend=all_mode='difference',"
+                f"format=gray,format=rgb24,{lut}[ov_merged]"
+            )
+        else:
+            filters.append(f"[ov_in{idx_a}][ov_in{idx_b}]blend=all_mode='normal'[ov_merged]")
+
         filters.append(
-            f"{previous}[v{i}]overlay=x={rect.x}:y={rect.y}:eof_action=repeat"
-            f":enable='gte(t,{delay:.6f})'[ov{i}]"
+            f"[base][ov_merged]overlay=x={rect_a.x}:y={rect_a.y}:eof_action=repeat[ov_composed]"
         )
-        previous = f"[ov{i}]"
+        previous = "[ov_composed]"
+    else:
+        cells = calculate_layout(project)
+        previous = "[base]"
+        for i, (video, cell) in enumerate(zip(project.videos, cells, strict=True)):
+            start = (source_time_ms(video, 0) or 0) / 1000
+            delay = max(0, video.offset_ms) / 1000
+            rect = cell.image
+            # Normalize BEFORE trim; resample only after trimming the source interval.
+            chain = (
+                f"setpts=PTS-STARTPTS,trim=start={start:.6f}:end={video.duration_ms / 1000:.6f},"
+                f"setpts=PTS-STARTPTS,scale={rect.width}:{rect.height},setsar=1,"
+                f"tpad=stop_mode=clone:stop_duration={length:.6f},"
+                f"fps={fps},setpts=PTS+{delay:.6f}/TB"
+            )
+            filters.append(f"[{i}:v:0]{chain}[v{i}]")
+            filters.append(
+                f"{previous}[v{i}]overlay=x={rect.x}:y={rect.y}:eof_action=repeat"
+                f":enable='gte(t,{delay:.6f})'[ov{i}]"
+            )
+            previous = f"[ov{i}]"
+
     filters.append(f"{previous}[{len(project.videos)}:v:0]overlay=0:0:format=auto:shortest=1[vout]")
     has_audio = False
     for i, video in enumerate(project.videos):

@@ -117,7 +117,31 @@ HELP_SECTIONS = [
         """,
     ),
     (
-        "6. MP4 내보내기 및 GPU 가속",
+        "6. 오버레이 비교 모드 (투명도·색상·잔차 오류)",
+        """
+        <h2>오버레이 영상 비교 모드</h2>
+        <p>두 개 이상의 영상이 등록되어 있을 때, 두 영상을 동일한 위치에 겹쳐서 재생하며 시각적 차이나 픽셀 단위 잔차를 정밀하게 분석할 수 있습니다.</p>
+
+        <h3>비교 모드 활성화 및 단축키</h3>
+        <ul>
+            <li><b>상단 툴바 / 메뉴:</b> 미리보기 상단의 <b>[⧉ 오버레이]</b> 버튼을 누르거나 <code>Ctrl + 3</code> 키를 누릅니다.</li>
+            <li><b>설정 패널:</b> 우측 <b>[오버레이 비교]</b> 그룹에서 <b>[오버레이 비교 모드 활성화]</b> 체크박스를 선택합니다.</li>
+            <li><b>영상 선택:</b> 기준 영상 (A)과 비교 대상 영상 (B)을 드롭다운에서 각각 지정합니다.</li>
+        </ul>
+
+        <h3>3가지 비교 방식</h3>
+        <ul>
+            <li><b>투명도 블렌드 (Alpha Blend):</b> 기준 영상 위에 비교 영상을 반투명하게 겹쳐서 표시합니다. 슬라이더(0% ~ 100%)로 투명도를 부드럽게 조절하여 시간적·공간적 위치 차이를 확인합니다.</li>
+            <li><b>색상 틴트 비교 (Color Tint):</b> 두 영상에 보색 관계인 색상(예: Red와 Cyan)을 곱하여 합성합니다. 두 영상의 픽셀이 일치하는 영역은 자연스러운 무채색(그레이)으로 나타나고, 차이가 나는 움직임이나 불일치 영역은 선명한 붉은색/청록색 윤곽선으로 즉시 드러납니다. (Red/Cyan, Green/Magenta, Blue/Yellow 배색 지원)</li>
+            <li><b>잔차 오류 맵 (Difference Map):</b> 두 영상 간의 절대 픽셀 차이 |A - B|를 계산합니다. 완전히 동일한 픽셀은 검은색(0)으로 표시되며, 미세한 노이즈나 압축 아티팩트, 객체 움직임은 밝게 표시됩니다. <b>잔차 증폭 배율(1.0x ~ 50.0x)</b>로 미세 오차를 증폭할 수 있으며, <b>잔차 색상(흑백, 히트맵, 레인보우 Jet, 네온 그린, 네온 마젠타, 사용자 지정 색상)</b>을 선택하여 시각적 인지도를 극대화할 수 있습니다.</li>
+        </ul>
+
+        <h3>실시간 재생 및 내보내기 연동</h3>
+        <p>오버레이 비교 모드 상태에서도 공통 타임라인 재생, 일시정지, 탐색, 오프셋 조절이 실시간으로 반영됩니다. 또한 오버레이 모드가 켜진 상태에서 <b>[내보내기]</b>를 실행하면, 선택한 비교 효과와 잔차 증폭이 적용된 비교 합성 영상을 MP4 파일로 그대로 저장할 수 있습니다.</p>
+        """,
+    ),
+    (
+        "7. MP4 내보내기 및 GPU 가속",
         """
         <h2>MP4 내보내기 (Export)</h2>
         <p>편집한 멀티뷰 레이아웃과 오프셋, 테두리, 이름표를 그대로 반영하여 하나의 고화질 MP4 파일로 렌더링합니다.</p>
@@ -137,7 +161,7 @@ HELP_SECTIONS = [
         """,
     ),
     (
-        "7. 키보드 단축키 일람",
+        "8. 키보드 단축키 일람",
         """
         <h2>단축키 일람</h2>
 
@@ -183,6 +207,10 @@ HELP_SECTIONS = [
                 <td>우측 설정 패널 접기 / 펼치기 토글</td>
             </tr>
             <tr>
+                <td><code>Ctrl + 3</code></td>
+                <td>오버레이 비교 모드 켜기 / 끄기 토글</td>
+            </tr>
+            <tr>
                 <td><code>F11</code></td>
                 <td>미리보기 최대화 (사이드바 동시 접기/펼치기)</td>
             </tr>
@@ -210,7 +238,7 @@ HELP_SECTIONS = [
         """,
     ),
     (
-        "8. 오픈소스 라이선스 안내",
+        "9. 오픈소스 라이선스 안내",
         """
         <h2>오픈소스 라이선스 고지 (Open Source Licenses)</h2>
         <p>SyncView 자체 코드와 문서는 MIT 라이선스입니다.
@@ -339,7 +367,31 @@ ENGLISH_HELP_SECTIONS = [
         """,
     ),
     (
-        "6. MP4 export and GPU encoding",
+        "6. Overlay comparison mode",
+        """
+        <h2>Overlay Video Comparison Mode</h2>
+        <p>When two or more videos are loaded, you can overlay two videos in the same position to inspect visual alignment and pixel-level residual differences.</p>
+
+        <h3>Enabling Overlay Mode</h3>
+        <ul>
+          <li><b>Toolbar / Menu:</b> Click <b>[⧉ Overlay]</b> above the preview canvas, or press <code>Ctrl+3</code>.</li>
+          <li><b>Settings Panel:</b> Check <b>Enable overlay comparison</b> under the <b>Overlay comparison</b> group.</li>
+          <li><b>Source Selection:</b> Pick Base Video (A) and Overlay Video (B) from the dropdown menus.</li>
+        </ul>
+
+        <h3>Three Comparison Methods</h3>
+        <ul>
+          <li><b>Alpha Blend:</b> Overlays video B onto video A with adjustable opacity (0% to 100%) for temporal and spatial crossfading.</li>
+          <li><b>Color Tint:</b> Tints video A and video B with complementary color palettes (such as Red and Cyan). Matching areas appear in natural neutral tones, while differences immediately stand out as vivid color fringes.</li>
+          <li><b>Residual Difference Map:</b> Computes absolute pixel differences |A - B|. Identical pixels render pure black. Use <b>Residual Gain (1.0x to 50.0x)</b> to amplify subtle compression artifacts or sub-pixel differences, and choose from multiple <b>Difference Color</b> modes (Grayscale, Thermal Heatmap, Rainbow Jet, Neon Green, Neon Magenta, or Custom Color) to maximize visual contrast.</li>
+        </ul>
+
+        <h3>Playback and Export</h3>
+        <p>Overlay comparison operates in real time during playback, scrubbing, and offset adjustments. Exporting while overlay mode is active renders the exact comparison effect into the output MP4 video.</p>
+        """,
+    ),
+    (
+        "7. MP4 export and GPU encoding",
         """
         <h2>Share a single MP4</h2>
         <p>Choose an output path, frame rate, and encoder, then click <b>Export</b>. The full timeline is exported with layout, offsets, borders, and labels.</p>
@@ -354,7 +406,7 @@ ENGLISH_HELP_SECTIONS = [
         """,
     ),
     (
-        "7. Keyboard shortcuts",
+        "8. Keyboard shortcuts",
         """
         <h2>Keyboard shortcuts</h2>
         <table border="1" cellpadding="6">
@@ -367,6 +419,7 @@ ENGLISH_HELP_SECTIONS = [
           <tr><td>Delete</td><td>Remove the selected video</td></tr>
           <tr><td>Double-click</td><td>Toggle solo view</td></tr>
           <tr><td>Ctrl+1 / Ctrl+2</td><td>Toggle video list / settings</td></tr>
+          <tr><td>Ctrl+3</td><td>Toggle overlay comparison mode</td></tr>
           <tr><td>F11</td><td>Expand / restore preview</td></tr>
           <tr><td>Ctrl+N / Ctrl+O / Ctrl+S</td><td>New project / open / save</td></tr>
           <tr><td>Ctrl+Shift+S</td><td>Save as</td></tr>
@@ -376,7 +429,7 @@ ENGLISH_HELP_SECTIONS = [
         """,
     ),
     (
-        "8. Open-source licenses",
+        "9. Open-source licenses",
         """
         <h2>Open-source licenses</h2>
         <p>SyncView's original code and documentation use the <b>MIT License</b>. Third-party components retain their licenses.</p>

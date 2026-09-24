@@ -166,6 +166,8 @@ class SyncPlayer(QObject):
         self._is_playing = False
         self._clock_timer.stop()
         for player in self._players.values():
+            if hasattr(player, "setPlaybackRate"):
+                player.setPlaybackRate(1.0)
             player.pause()
         self._update_audio_selection()
         self.position_changed.emit(self._common_time)
@@ -217,18 +219,28 @@ class SyncPlayer(QObject):
         now = time.monotonic()
         # Let a decoder finish an asynchronous seek before issuing another correction.
         correction_due = now - self._last_correction.get(video.id, 0) >= 0.25
+        drift = position - player.position()
         if (
             is_seeking
             or transition
-            or (
-                active
-                and self._is_playing
-                and correction_due
-                and abs(player.position() - position) > 100
-            )
+            or (active and self._is_playing and correction_due and abs(drift) > 400)
         ):
             self._last_correction[video.id] = now
             player.setPosition(position)
+            if hasattr(player, "setPlaybackRate"):
+                player.setPlaybackRate(1.0)
+        elif active and self._is_playing:
+            # Soft sync: micro-adjust playback rate without flushing decoders
+            if hasattr(player, "setPlaybackRate"):
+                if drift > 80:
+                    player.setPlaybackRate(1.05)
+                elif drift < -80:
+                    player.setPlaybackRate(0.95)
+                else:
+                    player.setPlaybackRate(1.0)
+        else:
+            if hasattr(player, "setPlaybackRate"):
+                player.setPlaybackRate(1.0)
         playing = active and self._is_playing
         state = player.playbackState()
         if playing and state != QMediaPlayer.PlaybackState.PlayingState:

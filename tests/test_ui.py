@@ -136,9 +136,9 @@ def test_main_window_responsive_toggles_and_help_text(qtbot):
     # Verify resolution example uses 'x' rather than multiplication symbol
     assert "1920x1080" in HELP_SECTIONS[3][1]
     assert "Front_Camera" in HELP_SECTIONS[3][1]
-    assert len(HELP_SECTIONS) == 8
-    assert "GPLv3" in HELP_SECTIONS[7][1]
-    assert "LGPLv3" in HELP_SECTIONS[7][1]
+    assert len(HELP_SECTIONS) == 9
+    assert "GPLv3" in HELP_SECTIONS[8][1]
+    assert "LGPLv3" in HELP_SECTIONS[8][1]
 
     # 2. Verify UI responsive toggles
     window = MainWindow()
